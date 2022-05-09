@@ -10,8 +10,8 @@ lint: |
   ansible-lint
 platforms:
 
-  - name: molecule-rockylinux8
-    image: "geerlingguy/docker-rockylinux8-ansible:latest"
+  - name: molecule-debian11
+    image: "geerlingguy/docker-debian11-ansible:latest"
     command: ${MOLECULE_DOCKER_COMMAND:-""}
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
