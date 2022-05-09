@@ -10,61 +10,61 @@ molecule_venvs:
     python: /usr/bin/python3
     site_packages: true
     packages:
-#      - "ansible<2.10"
-#      - ansible-lint
-#      - molecule[ansible]
-#      - molecule[lint]
-#      - molecule-docker
-#      - molecule-vagrant
-#      - python-vagrant
-#      - docker
-#      - docker-compose
+      - "ansible<2.10"
+      - ansible-lint
+      - molecule[ansible]
+      - molecule[lint]
+      - molecule-docker
+      - molecule-vagrant
+      - python-vagrant
+      - docker
+      - docker-compose
       - lxml
       - dnspython
-#      - jmespath
-#      - netaddr
-#      - python-consul
-#      - pyhcl
-#      - requests
+      - jmespath
+      - netaddr
+      - python-consul
+      - pyhcl
+      - requests
   - name: ansible4
     recreate: false
     python: /usr/bin/python3
     site_packages: true
     packages:
-#      - "ansible<5"
-#      - ansible-lint
-#      - molecule[ansible]
-#      - molecule[lint]
-#      - molecule-docker
-#      - molecule-vagrant
-#      - python-vagrant
-#      - docker
-#      - docker-compose
+      - "ansible<5"
+      - ansible-lint
+      - molecule[ansible]
+      - molecule[lint]
+      - molecule-docker
+      - molecule-vagrant
+      - python-vagrant
+      - docker
+      - docker-compose
       - lxml
       - dnspython
-#      - jmespath
-#      - netaddr
-#      - python-consul
-#      - pyhcl
-#      - requests
+      - jmespath
+      - netaddr
+      - python-consul
+      - pyhcl
+      - requests
   - name: ansible5
     recreate: false
     python: /usr/bin/python3
     site_packages: true
     packages:
-#      - "ansible<6"
-#      - ansible-lint
-#      - molecule[ansible]
-#      - molecule[lint]
-#      - molecule-docker
-#      - molecule-vagrant
-#      - python-vagrant
-#      - docker
-#      - docker-compose
+      - "ansible<6"
+      - ansible-lint
+      - molecule[ansible]
+      - molecule[lint]
+      - molecule-docker
+      - molecule-vagrant
+      - python-vagrant
+      - docker
+      - docker-compose
       - lxml
       - dnspython
-#      - jmespath
-#      - netaddr
-#      - python-consul
-#      - pyhcl
-#      - requests
+      - jmespath
+      - netaddr
+      - python-consul
+      - pyhcl
+      - requests
