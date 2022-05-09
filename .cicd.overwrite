@@ -1,0 +1,8 @@
+---
+
+# Generic
+generic:
+  role: ansible-role-molecule
+  role_short: molecule
+  role_description: |
+    Set-up molecule

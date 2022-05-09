@@ -1,0 +1,10 @@
+---
+
+collections: []
+
+roles:
+
+  - name: python
+    src: https://github.com/de-it-krachten/ansible-role-python
+    scm: git
+    version: main

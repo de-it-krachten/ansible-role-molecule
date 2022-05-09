@@ -1,0 +1,10 @@
+---
+
+- name: Install python3 + virtual environments
+  include_role:
+    name: python
+  vars:
+    python2: false
+    python3: true
+    python_virtualenv_root: "{{ molecule_venv_root }}"
+    python_virtualenvs: "{{ molecule_venvs }}"
