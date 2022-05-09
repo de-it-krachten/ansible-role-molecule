@@ -3,35 +3,17 @@
 # base directory for all virtual environments
 molecule_venv_root: /usr/local/venv
 
+# python executable
+molecule_python_ansible5: /usr/bin/python3
+
 # list of all virtual environments
 molecule_venvs:
-  - name: ansible29
-    recreate: false
-    python: /usr/bin/python3
-    site_packages: true
-    packages:
-      - "ansible<2.10"
-      - ansible-lint
-      - molecule[ansible]
-      - molecule[lint]
-      - molecule-docker
-      - molecule-vagrant
-      - python-vagrant
-      - docker
-      - docker-compose
-      - lxml
-      - dnspython
-      - jmespath
-      - netaddr
-      - python-consul
-      - pyhcl
-      - requests
   - name: ansible4
     recreate: false
     python: /usr/bin/python3
     site_packages: true
     packages:
-      - "ansible<5"
+      - "ansible>=4,<5"
       - ansible-lint
       - molecule[ansible]
       - molecule[lint]
@@ -44,15 +26,13 @@ molecule_venvs:
       - dnspython
       - jmespath
       - netaddr
-      - python-consul
-      - pyhcl
       - requests
   - name: ansible5
     recreate: false
-    python: /usr/bin/python3
+    python: "{{ molecule_python_ansible5 }}"
     site_packages: true
     packages:
-      - "ansible<6"
+      - "ansible>=5,<6"
       - ansible-lint
       - molecule[ansible]
       - molecule[lint]
@@ -65,6 +45,4 @@ molecule_venvs:
       - dnspython
       - jmespath
       - netaddr
-      - python-consul
-      - pyhcl
       - requests

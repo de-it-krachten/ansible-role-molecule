@@ -1,24 +1,90 @@
 #!/bin/bash
+#
+#=====================================================================
+#
+# Name        :
+# Version     :
+# Author      :
+# Description :
+#
+#
+#=====================================================================
+unset Debug
+#export Debug="set -x"
+$Debug
 
-### VARIABLES ###
+
+##############################################################
+#
+# Defining standard variables
+#
+##############################################################
+
+# Set temporary PATH
+#export PATH=/bin:/usr/bin:/sbin:/usr/sbin:$PATH
+
 # Get the name of the calling script
 FILENAME=$(readlink -f $0)
 BASENAME="${FILENAME##*/}"
 BASENAME_ROOT=${BASENAME%%.*}
 DIRNAME="${FILENAME%/*}"
 
+# Define temorary files, debug direcotory, config and lock file
 TMPDIR=/tmp
-TMPFILE=${TMPDIR}/${BASENAME}.$RANDOM.$RANDOM
-TIMESTAMP=`date "+%Y%m%d.%H%M%S"`
+VARTMPDIR=/var/tmp
+TMPFILE=${TMPDIR}/${BASENAME}.${RANDOM}.${RANDOM}
+DEBUGDIR=${TMPDIR}/${BASENAME_ROOT}_${USER}
+CONFIGFILE=${DIRNAME}/${BASENAME_ROOT}.cfg
+LOCKFILE=${VARTMP}/${BASENAME_ROOT}.lck
 
 # Logfile & directory
+#LOGDIR=$DIRNAME
 LOGDIR=$TMPDIR
+#LOGFILE=${LOGDIR}/${BASENAME_ROOT}.log
 LOGFILE=${LOGDIR}/${BASENAME_ROOT}.${TIMESTAMP}.log
+
+# Set date/time related variables
+DATESTAMP=$(date "+%Y%m%d")
+TIMESTAMP=$(date "+%Y%m%d.%H%M%S")
+
+# Figure out the platform
+OS=$(uname -s)
+
+# Get the hostname
+HOSTNAME=$(hostname -s)
+
+
+##############################################################
+#
+# Defining custom variables
+#
+##############################################################
 
 MOLECULE_DISTRO=${MOLECULE_DISTRO:-'rockylinux8'}
 export MOLECULE_DISTRO
 
-### FUNCTIONS ###
+
+##############################################################
+#
+# Defining standarized functions
+#
+#############################################################
+
+FUNCTIONS=${DIRNAME}/functions.sh
+if [[ -f ${FUNCTIONS} ]]
+then
+   . ${FUNCTIONS}
+#else
+#   echo "Functions file '${FUNCTIONS}' could not be found!" >&2
+#   exit 1
+fi
+
+
+##############################################################
+#
+# Defining customized functions
+#
+#############################################################
 
 function Usage
 {
@@ -156,13 +222,32 @@ function Check_role
     cd - >/dev/null
   fi
 
-  # Construct the command to run
-  if [[ $Mode == test ]]
-  then
-    Cmd=$(echo MOLECULE_DEBUG=$Debug PY_COLORS=1 ANSIBLE_FORCE_COLOR=1 molecule $Verbose1 $Args $Mode --destroy=$Destroy --scenario-name=$Scenario)
-  else
-    Cmd=$(echo MOLECULE_DEBUG=$Debug PY_COLORS=1 ANSIBLE_FORCE_COLOR=1 molecule $Verbose1 $Args $Mode)
-  fi
+  #
+  for Mode in `echo $Modes | sed "s/,/ /g"`
+  do
+    Execute_molecule $Mode
+  done
+
+}
+
+function Execute_molecule
+{
+
+  local Mode=$1
+
+  # Set variables for molecule
+  export MOLECULE_DEBUG=$Debug
+  export PY_COLORS=1
+  export ANSIBLE_FORCE_COLOR=1
+
+  case $Mode in
+    test)
+      Molecule_args="--destroy=$Destroy --scenario-name=$Scenario"
+      ;;
+  esac
+
+  Cmd=$(echo molecule $Verbose1 $Args $Mode $Molecule_args)
+
   [[ $Verbose == true ]] && echo "Executing '$Cmd'"
   [[ $Dry_run == true ]] && return 0
 
@@ -191,7 +276,7 @@ function Check_role
       exit 1
     fi
   fi
-    
+
   # Fail when a warning was given and failure is required
   if [[ $Fail_on_warning == true ]]
   then
@@ -205,14 +290,22 @@ function Check_role
       exit 1
     fi
   fi
-  
+
 }
 
 
-### MAIN ###
 
+##############################################################
+#
+# Main programs
+#
+#############################################################
+
+# Make sure temporary files are cleaned at exit
 trap 'rm -f ${TMPFILE}*' EXIT
+trap 'exit 1' HUP QUIT KILL TERM INT
 
+# Defaults
 Debug=false
 Dry_run=false
 Verbose=false
@@ -220,7 +313,7 @@ Destroy=always
 Fail_on_deprecation_warning=false
 Fail_on_warning=false
 Scenarios=default
-Mode=test
+Modes=test
 #Pre_dependency=true
 Pre_dependency=false
 Verbose_level=0
@@ -245,7 +338,7 @@ do
         ;;
      k) Destroy=never
         ;;
-     m) Mode=$OPTARG
+     m) Modes=$OPTARG
         ;;
      p) Pre_dependency=true
         ;;

@@ -1,10 +1,60 @@
 ---
 
-- name: Install python3 + virtual environments
+- name: Load variables based on OS type
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
+        - "{{ ansible_distribution }}.yml"
+        - "family-{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml"
+        - "family-{{ ansible_os_family }}.yml"
+        - default.yml
+      paths:
+        - 'vars'
+
+
+- name: Install python3
   include_role:
     name: python
   vars:
     python2: false
     python3: true
+
+- name: Uninstall python3 packages
+  package:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - python3-pyyaml
+
+- name: Install wheel globally
+  pip:
+    name: wheel
+    state: present
+  become: yes
+
+- name: Install pip packages globally
+  pip:
+    name:
+      - e2j2
+      - yq
+    state: present
+  become: yes
+
+- name: Install ansible/molecule into virtual environments
+  include_role:
+    name: python
+  vars:
     python_virtualenv_root: "{{ molecule_venv_root }}"
     python_virtualenvs: "{{ molecule_venvs }}"
+
+- name: Distribute all support scripts & files
+  copy:
+    src: "{{ item }}"
+    dest: /usr/local/bin/{{ item }}
+    mode: "0755"
+  loop:
+    - molecule-test.sh
+    - ansible-galaxy.sh
+    - ansible-requirements-clean.sh
