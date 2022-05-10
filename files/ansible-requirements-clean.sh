@@ -69,9 +69,9 @@ FUNCTIONS=${DIRNAME}/functions.sh
 if [[ -f ${FUNCTIONS} ]]
 then
    . ${FUNCTIONS}
-else
-   echo "Functions file '${FUNCTIONS}' could not be found!" >&2
-   exit 1
+#else
+#   echo "Functions file '${FUNCTIONS}' could not be found!" >&2
+#   exit 1
 fi
 
 
