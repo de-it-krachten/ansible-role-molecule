@@ -1,10 +1,16 @@
 ---
 
-collections: []
+- name: docker
+  src: https://github.com/de-it-krachten/ansible-role-docker
+  scm: git
+  version: main
 
-roles:
+- name: docker_compose
+  src: https://github.com/de-it-krachten/ansible-role-docker_compose
+  scm: git
+  version: main
 
-  - name: python
-    src: https://github.com/de-it-krachten/ansible-role-python
-    scm: git
-    version: main
+- name: python
+  src: https://github.com/de-it-krachten/ansible-role-python
+  scm: git
+  version: main
