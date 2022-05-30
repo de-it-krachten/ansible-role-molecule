@@ -46,6 +46,7 @@
   vars:
     python_virtualenv_root: "{{ molecule_venv_root }}"
     python_virtualenvs: "{{ molecule_venvs }}"
+  tags: molecule-idempotence-notest
 
 - name: Distribute all support scripts & files
   copy:
