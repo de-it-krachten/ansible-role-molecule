@@ -6,6 +6,17 @@ molecule_venv_root: /usr/local/venv
 # python executable for Ansible >= 5 (ansible core >= 2.12)
 molecule_python_ansible5: /usr/bin/python3
 
+# list of OS packages required
+molecule_os_packages:
+  - jq
+  - git
+
+# list of pypi packages required
+molecule_pip_packages:
+  - wheel
+  - e2j2
+  - yq
+
 # list of all virtual environments
 molecule_venvs:
   - name: ansible4

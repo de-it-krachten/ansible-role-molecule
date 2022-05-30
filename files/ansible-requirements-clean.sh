@@ -65,14 +65,14 @@ HOSTNAME=$(hostname -s)
 #
 #############################################################
 
-FUNCTIONS=${DIRNAME}/functions.sh
-if [[ -f ${FUNCTIONS} ]]
-then
-   . ${FUNCTIONS}
-#else
-#   echo "Functions file '${FUNCTIONS}' could not be found!" >&2
-#   exit 1
-fi
+FUNCTIONS="${DIRNAME}/functions.sh ${DIRNAME}/functions_ansible.sh"
+for Functions in ${FUNCTIONS}
+do
+  if [[ -f ${Functions} ]]
+  then
+     . ${Functions}
+  fi
+done
 
 
 ##############################################################
@@ -101,46 +101,6 @@ EOF
 
 }
 
-function Gitignore
-{
-
-  if ! grep -q "^roles/${Role}$" .gitignore
-  then
-    [[ $Verbose == true ]] && echo "Appending 'roles/${Role}' to .gitignore"
-    echo "roles/${Role}" >> .gitignore
-  fi
-
-  if ! grep -q "^roles/${Role}/$" .gitignore
-  then
-    [[ $Verbose == true ]] && echo "Appending 'roles/${Role}/' to .gitignore"
-    echo "roles/${Role}/" >> .gitignore
-  fi
-
-}
-
-function Yamlloop
-{
-
-  # Check for roles[]
-  if yq -j .roles $Reqfile >/dev/null 2>&1
-  then
-    Roles=$(yq -j .roles $Reqfile | jq -r '.[] | @base64')
-  else
-    Roles=$(yq -j . $Reqfile | jq -r '.[] | @base64')
-  fi
-
-  for row in $Roles
-  do
-    role=$(echo ${row} | base64 --decode | jq -r .name 2>/dev/null | sed "s/null//")
-    [[ -z $role ]] && role=$(echo ${row} | base64 --decode | jq -r .role 2>/dev/null | sed "s/null//")
-    [[ -z $role ]] && role=$(echo ${row} | base64 --decode | jq -r .name 2>/dev/null | sed "s/null//")
-    [[ -z $role ]] && role=$(echo ${row} | base64 --decode | jq -r .src 2>/dev/null | sed "s/null//")
-    [[ -z $role ]] && role=$(echo ${row} | base64 --decode)
-    echo "$role"
-  done
-
-}
-
 
 ##############################################################
 #
@@ -160,9 +120,10 @@ Dry_run=false
 Force=false
 Echo=
 Gitignore=true
+Ansible_lint=true
 
 # parse command line into arguments and check results of parsing
-while getopts :dDFGhv-: OPT
+while getopts :AdDFGhv-: OPT
 do
 
   # Support long options
@@ -173,6 +134,9 @@ do
   fi
 
   case $OPT in
+    A)
+      Ansible_lint=false
+      ;;
     d|debug)
       Verbose=true
       set -vx
@@ -219,12 +183,12 @@ then
   exit 1
 fi
 
-#Roles=`ansible-galaxy list -p roles/ 2>&1 | grep ^- | sed -r "s/^(- )(.*),.*/\2/"`
+# Get all external roles including dependencies
 Roles=$(Yamlloop)
+
+# Loop over each role
 for Role in $Roles
 do
-
-  [[ $Gitignore == true ]] && Gitignore
 
   if [[ -e roles/$Role ]]
   then
@@ -249,3 +213,9 @@ do
     [[ $Verbose == true ]] && echo "Role '$Role' not found"
   fi
 done
+
+# Update .gitignore to exclude external roles
+[[ $Dry_run == false && $Gitignore == true ]] && Gitignore
+
+# Update .ansible-lint to exclude external roles
+[[ $Dry_run == false && $Ansible_lint == true ]] && Ansible_lint

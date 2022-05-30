@@ -28,17 +28,15 @@
   loop:
     - python3-pyyaml
 
-- name: Install wheel globally
-  pip:
-    name: wheel
+- name: Install OS packages globally
+  package:
+    name: "{{ molecule_os_packages }}"
     state: present
   become: yes
 
 - name: Install pip packages globally
   pip:
-    name:
-      - e2j2
-      - yq
+    name: "{{ molecule_pip_packages }}"
     state: present
   become: yes
 
@@ -48,6 +46,7 @@
   vars:
     python_virtualenv_root: "{{ molecule_venv_root }}"
     python_virtualenvs: "{{ molecule_venvs }}"
+  tags: molecule-idempotence-notest
 
 - name: Distribute all support scripts & files
   copy:

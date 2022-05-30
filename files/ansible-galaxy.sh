@@ -7,6 +7,7 @@ BASENAME_ROOT=${BASENAME%%.*}
 DIRNAME="${FILENAME%/*}"
 
 Clean_args="-v"
+Dry_run=false
 
 # parse command line into arguments and check results of parsing
 while getopts :cCdDGh OPT
@@ -18,6 +19,10 @@ do
         Clean_only=true
         ;;
      d) set -vx
+        ;;
+     D) Dry_run=true
+        Dry_run1="-D"
+        Clean_args="${Clean_args} -D"
         ;;
      G) Clean_args="${Clean_args} -G"
         ;;
@@ -38,4 +43,9 @@ shift $(($OPTIND -1))
 [[ $Clean == true ]] && ${DIRNAME}/ansible-requirements-clean.sh ${Clean_args}
 [[ $Clean_only == true ]] && exit 0
 
-ansible-galaxy install -r roles/requirements.yml -p roles/ --ignore-errors
+if [[ $Dry_run == true ]]
+then
+  echo ansible-galaxy install -r roles/requirements.yml -p roles/ --ignore-errors
+else
+  ansible-galaxy install -r roles/requirements.yml -p roles/ --ignore-errors
+fi
