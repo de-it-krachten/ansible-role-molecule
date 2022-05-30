@@ -2,10 +2,9 @@
 #
 #=====================================================================
 #
-# Name        :
-# Version     :
-# Author      :
-# Description :
+# Name        : molecule-test.sh
+# Author      : Mark van Huijstee
+# Description : Execute molecule test on ansible role
 #
 #
 #=====================================================================
@@ -37,15 +36,15 @@ DEBUGDIR=${TMPDIR}/${BASENAME_ROOT}_${USER}
 CONFIGFILE=${DIRNAME}/${BASENAME_ROOT}.cfg
 LOCKFILE=${VARTMP}/${BASENAME_ROOT}.lck
 
+# Set date/time related variables
+DATESTAMP=$(date "+%Y%m%d")
+TIMESTAMP=$(date "+%Y%m%d.%H%M%S")
+
 # Logfile & directory
 #LOGDIR=$DIRNAME
 LOGDIR=$TMPDIR
 #LOGFILE=${LOGDIR}/${BASENAME_ROOT}.log
 LOGFILE=${LOGDIR}/${BASENAME_ROOT}.${TIMESTAMP}.log
-
-# Set date/time related variables
-DATESTAMP=$(date "+%Y%m%d")
-TIMESTAMP=$(date "+%Y%m%d.%H%M%S")
 
 # Figure out the platform
 OS=$(uname -s)
@@ -60,6 +59,8 @@ HOSTNAME=$(hostname -s)
 #
 ##############################################################
 
+MOLECULE_YAML=molecule/\$Scenario/molecule-test.yml
+MOLECULE_VERSION=$(PY_COLORS=0 molecule --version | awk '/^molecule/ {print $2}')
 MOLECULE_DISTRO=${MOLECULE_DISTRO:-'rockylinux8'}
 export MOLECULE_DISTRO
 
@@ -70,14 +71,14 @@ export MOLECULE_DISTRO
 #
 #############################################################
 
-FUNCTIONS=${DIRNAME}/functions.sh
-if [[ -f ${FUNCTIONS} ]]
-then
-   . ${FUNCTIONS}
+#FUNCTIONS=${DIRNAME}/functions.sh
+#if [[ -f ${FUNCTIONS} ]]
+#then
+#   . ${FUNCTIONS}
 #else
 #   echo "Functions file '${FUNCTIONS}' could not be found!" >&2
 #   exit 1
-fi
+#fi
 
 
 ##############################################################
@@ -100,7 +101,9 @@ Usage : $BASENAME <flags>
 Flags :
 
    -d          : Debug mode (set -x)
+   -D          : Execute as dry-run
    -h          : Prints this help message
+   -v          : Verbose mode
 
    -c <path>   : Path where role is located (default=current path)
    -e key=val  : Extra vars for molecule
@@ -112,20 +115,42 @@ Flags :
    -s <names>  : Scenario(s) to execute (divided by comma's)
    -x          : Fail if deprecation warning is found
    -X          : Fail if warning is found (non-deprecation)
+   -Z <x,y>    : Distributions to test
 
 Examples:
 
-Do not delete container
+Test on Debian 10+11 only
+\$ BASENAME -Z debian10,debian11
+
+Do not delete container after testing
 \$ $BASENAME -k
 
 Only create containers
 \$ $BASENAME -m create
 
-
 EOF
 
 }
 
+function Setup
+{
+
+  Install_pip e2j2
+  Install_pip yq
+
+}
+
+function Install_pip
+{
+
+  if ! pip show $1 >/dev/null 2>&1
+  then
+    echo "Installing pip package '$1'"
+    pip install $1 || exit 1
+  fi
+
+}
+  
 function Executable_test
 {
 
@@ -141,20 +166,63 @@ function Executable_test
 
 }
 
-function Discard_deprecation
+function Fail_on_error
 {
 
-  cat <<EOF > ${TMPFILE}dep
-\[DEPRECATION WARNING\]: docker_image_facts
-EOF
+  # Fail when molecule gave an error
+  if [[ ${PIPESTATUS[0]} -ne 0 ]]
+  then
+    echo "#############################################################" >&2
+    echo "Molecule encountered one or more errors" >&2
+    echo "#############################################################" >&2
+    exit 1
+  fi
 
 }
 
-function Discard_warning
+function Fail_on_deprecation_warning
 {
 
-  cat <<EOF > ${TMPFILE}warn
-EOF
+  # Get all deprecation warnings we should ignore
+  yq -y .deprecation_warnings.ignore ${Molecule_yaml} 2>/dev/null | \
+  sed "/null/d;/\.\.\./d" | \
+  sed "s/- '//;s/'$//;s/''/'/g;s/\[/\\\[/;s/\]/\\\]/" > ${TMPFILE}dep
+
+  # Get all deprecation warning not to be ignored
+  grep "\[DEPRECATION WARNING\]" ${TMPFILE} | grep -v -f ${TMPFILE}dep > ${TMPFILE}dep1
+
+  # Throw error if warning is found
+  if [[ -s ${TMPFILE}dep1 ]]
+  then
+    echo "#############################################################" >&2
+    echo "One or more deprecation warnings found!" >&2
+    echo "#############################################################" >&2
+    cat ${TMPFILE}dep1 >&2
+    exit 1
+  fi
+
+}
+
+function Fail_on_warning
+{
+
+  # Get all warnings we should ignore
+  yq -y .warnings.ignore ${Molecule_yaml} 2>/dev/null | \
+  sed "/null/d;/\.\.\./d" | \
+  sed "s/- '//;s/'$//;s/''/'/g;s/\[/\\\[/;s/\]/\\\]/" > ${TMPFILE}warn
+
+  # Get all deprecation warning not to be ignored
+  grep "\[WARNING\]" ${TMPFILE} | grep -v -f ${TMPFILE}warn > ${TMPFILE}warn1
+
+  # Throw error if warning is found
+  if [[ -s ${TMPFILE}warn1 ]]
+  then
+    echo "#############################################################" >&2
+    echo "One or more warnings found!" >&2
+    echo "#############################################################" >&2
+    cat ${TMPFILE}warn1 >&2
+    exit 1
+  fi
 
 }
 
@@ -184,10 +252,10 @@ function Fix_requirements_role
     return 1
   fi
 
-  if [[ -f molecule/default/requirements.yml ]]
+  if [[ -f molecule/$Scenario/requirements.yml ]]
   then
-    [[ ! -f molecule/default/requirements.yml.org ]] && cp molecule/default/requirements.yml molecule/default/requirements.yml.org
-    sed -i -r "s|git@([a-zA-Z0-9\.\-\_]*):(.*)|https://gitlab-ci-token:$CI_JOB_TOKEN@\\1/\\2|" molecule/default/requirements.yml
+    [[ ! -f molecule/$Scenario/requirements.yml.org ]] && cp molecule/$Scenario/requirements.yml molecule/$Scenario/requirements.yml.org
+    sed -i -r "s|git@([a-zA-Z0-9\.\-\_]*):(.*)|https://gitlab-ci-token:$CI_JOB_TOKEN@\\1/\\2|" molecule/$Scenario/requirements.yml
   fi
 
 }
@@ -244,6 +312,9 @@ function Execute_molecule
     test)
       Molecule_args="--destroy=$Destroy --scenario-name=$Scenario"
       ;;
+    *)
+      Molecule_args="--scenario-name=$Scenario"
+      ;;
   esac
 
   Cmd=$(echo molecule $Verbose1 $Args $Mode $Molecule_args)
@@ -254,45 +325,48 @@ function Execute_molecule
   # Execute the command
   eval $Cmd 2>&1 | tee ${TMPFILE}
 
+  # Save the exit code
+  Exit_code=${PIPESTATUS[0]}
+
   # Fail when molecule gave an error
-  if [[ ${PIPESTATUS[0]} -ne 0 ]]
-  then
-    echo "#############################################################" >&2
-    echo "Molecule encountered one or more errors" >&2
-    echo "#############################################################" >&2
-    exit 1
-  fi
+  [[ $Exit_code -ne 0 ]] && Fail_on_error
 
   # Fail when a deprecation warning was given and failure is required
-  if [[ $Fail_on_deprecation_warning == true ]]
-  then
-    Discard_deprecation
-    grep -v -f ${TMPFILE}dep ${TMPFILE} > ${TMPFILE}dep1
-    if grep -q "\[DEPRECATION WARNING\]" ${TMPFILE}dep1
-    then
-      echo "#############################################################"
-      echo "One or more deprecation warnings found!" >&2
-      echo "#############################################################"
-      exit 1
-    fi
-  fi
+  [[ $Fail_on_deprecation_warning == true ]] && Fail_on_deprecation_warning
 
   # Fail when a warning was given and failure is required
-  if [[ $Fail_on_warning == true ]]
-  then
-    Discard_warning
-    grep -v -f ${TMPFILE}warn ${TMPFILE} > ${TMPFILE}warn1
-    if grep -q "\[WARNING\]" ${TMPFILE}warn1
-    then
-      echo "#############################################################"
-      echo "One or more warnings found!" >&2
-      echo "#############################################################"
-      exit 1
-    fi
-  fi
+  [[ $Fail_on_warning == true ]] && Fail_on_warning
+
+  # Exit using the exide code of molecule
+  [[ $Exit_code -gt 0 ]] && exit $Exit_code
 
 }
 
+function Render_molecule_yaml
+{
+
+  # export Scenario
+  export Scenario
+
+  # Create molecule.yml from template
+  if [[ -f molecule/$Scenario/molecule.yml.j2 ]]
+  then
+
+    if [[ -z $Molecule_distributions ]]
+    then
+      export MOLECULE_DISTROS="json:[\"$MOLECULE_DISTRO\"]"
+    else
+      Molecule_distributions=$(echo $Molecule_distributions | sed "s/ /,/g")
+      export MOLECULE_DISTROS="json:$(echo [$Molecule_distributions] | yq -c -j .)"
+    fi
+
+    cd molecule/$Scenario
+    rm -f molecule.yml
+    e2j2 -f molecule.yml.j2 || exit 1
+    cd - >/dev/null
+  fi
+
+}
 
 
 ##############################################################
@@ -302,7 +376,7 @@ function Execute_molecule
 #############################################################
 
 # Make sure temporary files are cleaned at exit
-trap 'rm -f ${TMPFILE}*' EXIT
+trap 'rm -f ${TMPFILE}* ; echo "Log file : $LOGFILE"' EXIT
 trap 'exit 1' HUP QUIT KILL TERM INT
 
 # Defaults
@@ -310,6 +384,7 @@ Debug=false
 Dry_run=false
 Verbose=false
 Destroy=always
+Destroy_and_setup=false
 Fail_on_deprecation_warning=false
 Fail_on_warning=false
 Scenarios=default
@@ -317,9 +392,10 @@ Modes=test
 #Pre_dependency=true
 Pre_dependency=false
 Verbose_level=0
+Log=true
 
 # parse command line into arguments and check results of parsing
-while getopts :c:de:Dhkm:Ps:vxXZ: OPT
+while getopts :c:de:DhkKLm:Ps:vxXZ: OPT
 do
    case $OPT in
      c) Role_path=$OPTARG
@@ -338,13 +414,17 @@ do
         ;;
      k) Destroy=never
         ;;
+     K) Destroy_and_setup=true
+        ;;
+     L) Log=false
+        ;;
      m) Modes=$OPTARG
         ;;
      p) Pre_dependency=true
         ;;
      P) Pre_dependency=false
         ;;
-     s) Scenarios="$OPTARG"
+     s) Scenarios=`echo $OPTARG | sed "s/,/ /g"`
         ;;
      v) Verbose=true
         Verbose_level=$(($Verbose_level+1))
@@ -367,13 +447,28 @@ do
 done
 shift $(($OPTIND -1))
 
+# Molecule_distributions: fallback onto '$MOLECULE_DISTRO'
+Molecule_distributions=${Molecule_distributions:-${MOLECULE_DISTRO}}
+
+# destro, create and test without destroy
+if [[ $Destroy_and_setup == true ]]
+then
+  ${DIRNAME}/${BASENAME} -L -m destroy -Z "${Molecule_distributions}" $Verbose1
+  ${DIRNAME}/${BASENAME} -L -m create -Z "${Molecule_distributions}" $Verbose1 || exit $?
+  ${DIRNAME}/${BASENAME} -L -k -Z "${Molecule_distributions}" $Verbose1 || exit $?
+  exit 0
+fi
+
+# Ensure all required packages are installed
+Setup
+
 # Test for all needed executables
 Executable_test ansible
 Executable_test ansible-playbook
 Executable_test molecule
 
 # Write output to screen + logfile
-if [[ $Dry_run == false ]]
+if [[ $Dry_run == false && $Log == true ]]
 then
   { coproc tee { tee $LOGFILE ;} >&3 ;} 3>&1
   exec >&${tee[1]} 2>&1
@@ -413,37 +508,36 @@ do
   # Fix requirement.yml (git/pubkey --> https/token)
   Fix_requirements_role
 
-  # Create molecule.yml from template
-  if [[ -f molecule/default/molecule.yml.j2 ]]
-  then
-
-    if [[ -z $Molecule_distributions ]]
-    then
-      export MOLECULE_DISTROS="json:[\"$MOLECULE_DISTRO\"]"
-    else
-      Molecule_distributions=$(echo $Molecule_distributions | sed "s/ /,/g")
-      export MOLECULE_DISTROS="json:$(echo [$Molecule_distributions] | yq -c -j .)"
-    fi
-
-    cd molecule/default
-    rm -f molecule.yml
-    e2j2 -f molecule.yml.j2 || exit 1
-    cd - >/dev/null
-  fi
-
   # Execute dependency phase
   [[ $Pre_dependency == true ]] && molecule dependency --scenario-name=$Scenario
 
-  for Scenario in `echo $Scenarios | sed "s/,/ /g"`
+  # Loop over all scenarios
+  for Scenario in $Scenarios
   do
+
+    # Display scenario
+    echo "Proccessing scenario '$Scenario'"
+
+    # Substitute scenario name
+    eval Molecule_yaml=$MOLECULE_YAML
+
+    # Show if $Molecule_yaml is present
+    if [[ -f $Molecule_yaml ]]
+    then
+      echo "Found '$Molecule_yaml'"
+    fi
+
+    # Render molecule.yml from jinja2 template
+    Render_molecule_yaml
+
+    # Test the ansible role against this scenario
     Check_role $Scenario
+
   done
 
   # Retrun to the main directory
   [[ $Nested_roles == true ]] && cd - >/dev/null
 done
-
-echo "Log file : $LOGFILE"
 
 # Exit w/out errors
 exit 0
