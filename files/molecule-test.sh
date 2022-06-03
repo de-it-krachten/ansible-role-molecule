@@ -352,14 +352,15 @@ function Render_molecule_yaml
   if [[ -f molecule/$Scenario/molecule.yml.j2 ]]
   then
 
-    if [[ -z $Molecule_distributions ]]
-    then
-      export MOLECULE_DISTROS="json:[\"$MOLECULE_DISTRO\"]"
-    else
-      Molecule_distributions=$(echo $Molecule_distributions | sed "s/ /,/g")
-      export MOLECULE_DISTROS="json:$(echo [$Molecule_distributions] | yq -c -j .)"
-    fi
+    # Create JSON with all distributions we want 
+    Distros=$(echo $Molecule_distributions | sed "s/,/ /g;s/ /|/g")
+    Distros_json=$(yq -cj '. | map(select(.name|test("'$Distros'")))' .molecule-platforms.yml)
 
+    # Show settings in verbose mode
+    [[ $Verbose == true ]] && echo "$Distros_json" | jq .
+
+    # Render molecule.yml
+    export MOLECULE_DISTROS="json:${Distros_json}"
     cd molecule/$Scenario
     rm -f molecule.yml
     e2j2 -f molecule.yml.j2 || exit 1
