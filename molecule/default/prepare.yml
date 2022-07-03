@@ -126,11 +126,12 @@
               - openssh-server
               - openssh-clients
               - iproute
+              - hostname
             state: present
 
         - name: Activate epel repository
           include_role:
-            name: robertdebock.epel
+            name: epel
           when: activate_epel is defined and activate_epel|bool
 
       when: ansible_os_family == 'RedHat' and (ansible_distribution_major_version|int) < 8
@@ -185,6 +186,7 @@
         - name: Install default packages
           package:
             name:
+              - hostname
               - openssh-server
               - openssh-clients
               - iproute
@@ -192,13 +194,8 @@
 
         - name: Activate epel repository
           include_role:
-            name: robertdebock.epel
+            name: epel
           when: activate_epel is defined and activate_epel|bool
-
-        - name: Activate powertools repository
-          include_role:
-            name: robertdebock.powertools
-          when: activate_powertools is defined and activate_powertools|bool
 
       when: ansible_os_family == 'RedHat' and (ansible_distribution_major_version|int) >= 8
 

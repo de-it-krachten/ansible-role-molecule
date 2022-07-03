@@ -7,6 +7,18 @@ generic:
   role_description: |
     Install & manage molecule for testing Ansible roles
 
+# Supported platforms
+platforms:
+  rhel7:
+    ci: false
+    supported: false
+  centos7:
+    ci: false
+    supported: false
+  debian10:
+    ci: false
+    supported: false
+
 ci_templates:
   requirements.yml:
     force: false
