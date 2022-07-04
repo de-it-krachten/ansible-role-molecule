@@ -18,7 +18,6 @@ Supported platforms
 - AlmaLinux 8
 - AlmaLinux 9
 - Debian 11 (Bullseye)
-- Ubuntu 18.04 LTS
 - Ubuntu 20.04 LTS
 - Ubuntu 22.04 LTS
 - Fedora 35
@@ -94,14 +93,19 @@ molecule_venvs:
 
 </pre></code>
 
-### vars/family-RedHat.yml
-<pre><code>
-molecule_python_ansible5: /usr/bin/python3.8
-</pre></code>
-
 ### vars/default.yml
 <pre><code>
 
+</pre></code>
+
+### vars/family-RedHat-9.yml
+<pre><code>
+molecule_python_ansible5: /usr/bin/python3
+</pre></code>
+
+### vars/family-RedHat-8.yml
+<pre><code>
+molecule_python_ansible5: /usr/bin/python3.8
 </pre></code>
 
 ### vars/family-RedHat-7.yml

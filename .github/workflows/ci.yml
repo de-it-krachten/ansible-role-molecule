@@ -85,10 +85,6 @@ jobs:
             playbook: converge.yml
             # continue_on_error: false
             # failfast: true
-          - distro: ubuntu1804
-            playbook: converge.yml
-            # continue_on_error: false
-            # failfast: true
           - distro: ubuntu2004
             playbook: converge.yml
             # continue_on_error: false

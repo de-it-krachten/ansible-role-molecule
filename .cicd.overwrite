@@ -18,6 +18,9 @@ platforms:
   debian10:
     ci: false
     supported: false
+  ubuntu1804:
+    ci: false
+    supported: false
 
 ci_templates:
   requirements.yml:
