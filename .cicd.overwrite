@@ -22,6 +22,8 @@ platforms:
     ci: false
     supported: false
 
-ci_templates:
-  requirements.yml:
-    force: false
+molecule:
+  requirements:
+    roles_extra:
+      - package
+      - python
