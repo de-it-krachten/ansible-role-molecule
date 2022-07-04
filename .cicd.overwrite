@@ -7,32 +7,23 @@ generic:
   role_description: |
     Install & manage molecule for testing Ansible roles
 
-github:
-  fail_fast: false
-
-ci_templates:
-  requirements.yml:
-    force: false
+# Supported platforms
+platforms:
+  rhel7:
+    ci: false
+    supported: false
+  centos7:
+    ci: false
+    supported: false
+  debian10:
+    ci: false
+    supported: false
+  ubuntu1804:
+    ci: false
+    supported: false
 
 molecule:
-  platforms:
-    - rockylinux8
-    - debian11
-    - ubuntu2004
-    - ubuntu2204
-    - fedora35
-platforms:
-  - image: rhel8
-    name: RHEL 8
-  - image: rockylinux8
-    name: RockyLinux 8
-  - image: almalinux8
-    name: AlmaLinux 8
-  - image: debian11
-    name: Debian 11 (Bullseye)
-  - image: ubuntu2004
-    name: Ubuntu 20.04 LTS (Focal Fossa)
-  - image: ubuntu2204
-    name: Ubuntu 22.04 LTS (Jammy Jellyfish)
-  - image: fedora35
-    name: Fedora 35
+  requirements:
+    roles_extra:
+      - package
+      - python
