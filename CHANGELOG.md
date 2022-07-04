@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.0.2...v1.1.0) (2022-07-04)
+
+
+### Features
+
+* Add RHEL9 support ([d029823](https://github.com/de-it-krachten/ansible-role-molecule/commit/d02982327832f17b7a9138619e562bcb96b957dc))
+
 ## [1.0.2](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.0.1...v1.0.2) (2022-05-30)
 
 
