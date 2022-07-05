@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.1.0...v1.1.1) (2022-07-05)
+
+
+### Bug Fixes
+
+* Insert latest molecule-test.sh due to hostvars issue ([62dc605](https://github.com/de-it-krachten/ansible-role-molecule/commit/62dc605c748ff2b9cc50a202bc65172b54b05038))
+
 # [1.1.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.0.2...v1.1.0) (2022-07-04)
 
 
