@@ -364,6 +364,10 @@ function Render_molecule_yaml
     cd molecule/$Scenario
     rm -f molecule.yml
     e2j2 -f molecule.yml.j2 || exit 1
+
+    # Quick fix for nested jinja host_vars
+    sed -i -r "s/(hostvars\[.*)/\"{{ \\1 }}\"/" molecule.yml
+
     cd - >/dev/null
   fi
 
@@ -407,8 +411,7 @@ do
      D) Dry_run=true
         Verbose=true
         ;;
-     e) # Write variables to file
-        Args="$Args -e $OPTARG"
+     e) Args="$Args -e $OPTARG"
         ;;
      h) Usage
         exit 0
