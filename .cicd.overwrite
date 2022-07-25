@@ -23,6 +23,9 @@ platforms:
     supported: false
 
 molecule:
+  prepare:
+    vars:
+      activate_epel: true
   requirements:
     roles_extra:
       - package
