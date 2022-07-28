@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.1.1...v1.2.0) (2022-07-28)
+
+
+### Features
+
+* Implement ansible-lint v6 support ([eeb145a](https://github.com/de-it-krachten/ansible-role-molecule/commit/eeb145aaa1e94e38befe8df6106f87351588df59))
+
 ## [1.1.1](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.1.0...v1.1.1) (2022-07-05)
 
 
