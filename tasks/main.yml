@@ -56,4 +56,5 @@
   loop:
     - molecule-test.sh
     - ansible-galaxy.sh
+    - ansible-lint.sh
     - ansible-requirements-clean.sh

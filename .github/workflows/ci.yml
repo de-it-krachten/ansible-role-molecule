@@ -146,7 +146,7 @@ jobs:
         run: sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
 
       - name: Install test dependencies.
-        run: pip3 install ansible ansible-lint==5.4.0 molecule[docker] docker yamllint jmespath e2j2 yq
+        run: pip3 install ansible ansible-lint==5.4.0 molecule[docker] molecule-hetznercloud docker yamllint jmespath e2j2 yq
 
       - name: Set-up github runner
         run: |
@@ -158,11 +158,14 @@ jobs:
           sudo apt install curl
           sudo curl -s -o /usr/local/bin/ansible-galaxy.sh \
             https://raw.githubusercontent.com/de-it-krachten/ansible-role-molecule/dev/files/ansible-galaxy.sh
+          sudo curl -s -o /usr/local/bin/ansible-lint.sh \
+            https://raw.githubusercontent.com/de-it-krachten/ansible-role-molecule/dev/files/ansible-lint.sh
           sudo curl -s -o /usr/local/bin/ansible-requirements-clean.sh \
             https://raw.githubusercontent.com/de-it-krachten/ansible-role-molecule/dev/files/ansible-requirements-clean.sh
           sudo curl -s -o /usr/local/bin/molecule-test.sh \
             https://raw.githubusercontent.com/de-it-krachten/ansible-role-molecule/dev/files/molecule-test.sh
           sudo chmod 755 /usr/local/bin/ansible-galaxy.sh
+          sudo chmod 755 /usr/local/bin/ansible-lint.sh
           sudo chmod 755 /usr/local/bin/ansible-requirements-clean.sh
           sudo chmod 755 /usr/local/bin/molecule-test.sh
 
@@ -173,4 +176,4 @@ jobs:
           ANSIBLE_FORCE_COLOR: '1'
           MOLECULE_DISTRO: ${{ matrix.distro }}
           MOLECULE_PLAYBOOK: ${{ matrix.playbook }}
-
+          HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}

@@ -9,6 +9,7 @@
     https_proxy: "{{ lookup('env', 'HTTPS_PROXY') | default('') }}"
     http_proxy: "{{ lookup('env', 'HTTP_PROXY') | default('') }}"
     no_proxy: "{{ lookup('env', 'NO_PROXY') | default('127.0.0.1,localhost') }}"
+    molecule_driver: "{{ lookup('env', 'MOLECULE_DRIVER_NAME') }}"
 
     iptables_distros:
       - debian10
@@ -26,7 +27,8 @@
       - fedora35
       - fedora36
       - centos8
-      - centos9
+      - centos8s
+      - centos9s
       - oraclelinux8
       - oraclelinux9
       - rocky8
@@ -48,7 +50,7 @@
       set_fact:
         molecule_distro: >-
           {%- if ansible_distribution == 'Ubuntu' -%}
-          {{ (ansible_distribution | lower) + (ansible_distribution_version | regex_replace('\\.')) }}
+          {{ (ansible_distribution | lower) + (ansible_distribution_version | regex_replace('\.')) }}
           {%- elif ansible_distribution == 'CentOS' and ansible_distribution_release == 'Stream' -%}
           {{ (ansible_distribution | lower) + ansible_distribution_major_version + 's' }}
           {%- else -%}
@@ -59,6 +61,7 @@
       debug:
         msg:
           molecule_distro: "{{ molecule_distro }}"
+          molecule_driver: "{{ molecule_driver }}"
           proxy_use: "{{ proxy_use }}"
           https_proxy: "{{ https_proxy }}"
           http_proxy: "{{ http_proxy }}"
@@ -66,10 +69,32 @@
           prepare_firewall: "{{ prepare_firewall | default(False) }}"
           update_all: "{{ update_all | default(False) }}"
 
-    - name: family Debian
+    - name: Enable root access
+      when:
+        - molecule_driver is search('^(hetznercloud|vagrant)$')
+        - enable_root_access is defined and enable_root_access|bool
+        - root_pubkey is defined and root_pubkey|length > 0
       block:
 
-        - name: Configure APT to use proxy
+        - name: Create /root/.ssh
+          file:
+            path: /root/.ssh
+            state: directory
+            owner: root
+            group: root
+            mode: "0700"
+
+        - name: Setup pubkey authentication for root
+          authorized_key:
+            user: root
+            state: present
+            key: "{{ root_pubkey }}"
+
+    - name: Family Debian
+      when: ansible_os_family == 'Debian'
+      block:
+
+        - name: Configure APT to use proxy  # noqa template-instead-of-copy
           copy:
             content: |
               Acquire::http::proxy "{{ http_proxy }}/";
@@ -101,9 +126,9 @@
               - ssh
             state: present
 
-      when: ansible_os_family == 'Debian'
 
-    - name: family RedHat < 8
+    - name: Family RedHat < 8
+      when: ansible_os_family == 'RedHat' and (ansible_distribution_major_version|int) < 8
       block:
 
         - name: Configure YUM to use proxy
@@ -139,9 +164,9 @@
             name: epel
           when: activate_epel is defined and activate_epel|bool
 
-      when: ansible_os_family == 'RedHat' and (ansible_distribution_major_version|int) < 8
 
-    - name: family RedHat 8+
+    - name: Family RedHat 8+
+      when: ansible_os_family == 'RedHat' and (ansible_distribution_major_version|int) >= 8
       block:
 
         # Switch to CentOS 8 vault mirrors
@@ -203,10 +228,11 @@
             name: epel
           when: activate_epel is defined and activate_epel|bool and ansible_distribution != 'Fedora'
 
-      when: ansible_os_family == 'RedHat' and (ansible_distribution_major_version|int) >= 8
-
 
     - name: Firewall
+      when:
+        - prepare_firewall is defined and prepare_firewall|bool
+        - inventory_hostname is not search('-dns$')
       block:
 
         - name: Install iptables
@@ -224,14 +250,17 @@
             name: firewalld
           when: molecule_distro in firewalld_distros
 
-      when:
-        - prepare_firewall is defined and prepare_firewall|bool
-        - inventory_hostname is not search('-dns$')
 
-    - name: re-run setup
+    - name: Reboot the server
+      include_role:
+        name: reboot
+      when: molecule_driver is search('^(vagrant|hetznercloud)$')
+
+    - name: Re-run setup
       setup:
 
-    - name: localhosts
+    - name: Localhosts
+      when: register_hosts is defined and register_hosts|bool
       block:
 
         - name: Register all nodes in /etc/hosts
@@ -239,6 +268,4 @@
             name: hosts
           vars:
             hosts_mode: hosts
-
-      when: register_hosts is defined and register_hosts|bool
 
