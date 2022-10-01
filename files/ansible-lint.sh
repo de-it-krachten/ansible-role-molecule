@@ -104,7 +104,7 @@ Flags :
    -v|--verbose : Verbose output
 
 #   -F           : Auto fix errors encountered (uses ansible-fix.sh)
-   -x           : Prepare playbook project (uses ansible-galaxy) (default)
+   -x           : Prepare playbook project (uses ansible-galaxy)
    -X           : Do NOT prepare playbook project
 
 EOF
@@ -276,6 +276,9 @@ shift $(($OPTIND -1))
 
 Check_version
 Ansible_type
+
+# Playbook preparation
+[[ $Prepare == true && $Ansible_repo_type == playbook ]] && Prepare
 
 # Run ansible-lint
 ansible-lint -q -f codeclimate $Tags2skip >${TMPFILE} 2>/dev/null
