@@ -1,6 +1,10 @@
 ---
 
 roles:
+  - name: acl
+    src: https://github.com/de-it-krachten/ansible-role-acl.git
+    version: fqcn
+    scm: git
   - name: epel
     src: https://github.com/de-it-krachten/ansible-role-epel.git
     version: main

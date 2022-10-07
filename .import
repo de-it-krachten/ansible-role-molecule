@@ -1,4 +1,0 @@
-../../git-tools/molecule/molecule-test.sh             files
-../../git-tools/ansible/ansible-galaxy.sh             files
-../../git-tools/ansible/ansible-lint.sh               files
-../../git-tools/ansible/ansible-requirements-clean.sh files

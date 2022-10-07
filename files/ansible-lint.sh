@@ -111,8 +111,39 @@ EOF
 
 }
 
+function Overwrite_virtualenv
+{
+
+  # For ansible-lint, the migration from v4 -> v5 is breaking
+  # venv 'ansible29' contains ansible-lint 4.2.0 (before migration)
+  # venv 'ansible29x' contains ansible-lint 5.4.0 (after migration)
+
+  if [[ -f .venv.mapping ]]
+  then
+
+    # Get current venv and the one it is mapped to
+    Venv=$(basename $VIRTUAL_ENV)
+    Venv_alt=$(awk '$1=="'$Venv'" {print $2}' .venv.mapping)
+    # Leave this function if nothing found
+    [[ -z $Venv_alt ]] && return 0
+
+    # Activate the alternate venv
+    Venv_alt_path=$(dirname $VIRTUAL_ENV)/${Venv_alt}
+    if [[ -n $Venv_alt && -f ${Venv_alt_path}/bin/activate ]]
+    then
+      echo "Switching to alternative venv '${Venv_alt_path}'"
+      source ${Venv_alt_path}/bin/activate
+    fi
+
+  fi
+
+}
+
 function Check_version
 {
+
+  # Write version to stderr
+  ansible-lint --version >&2
 
   # ansible-lint
   Ansible_lint_version=$(ansible-lint --version | awk '$1=="ansible-lint" {print $2}')
@@ -122,47 +153,27 @@ function Check_version
   [[ $Ansible_lint_major_version -lt 4 ]] && echo "Please upgrade to ansible-lint v4 or higher!" >&2 && exit 1
 
   # Set some version specific settings
-  [[ $Ansible_lint_major_version == 4 ]] && Args="--parseable-severity" && Output_format=legacy
-  [[ $Ansible_lint_major_version =~ (5|6) ]] && Args="-f codeclimate"
+  [[ $Ansible_lint_major_version == 4 ]] && Args="--parseable-severity" && InputF=pep8
+  [[ $Ansible_lint_major_version =~ (5|6) ]] && Args="-f codeclimate" && InputF=json
 
 }
 
-function Format_json
+function Install_pip
 {
 
-  echo "$line" | base64 -d
-  [[ $Issue != $Issues ]] && echo -e ",\c"
+  if ! pip3 show $1 >/dev/null 2>&1
+  then
+    echo "Installing pip package '$1'"
+    pip3 install $1 || exit 1
+  fi
 
-}
-
-
-function Format_parsable
-{
-
-  echo "$path|$linenr|$check_name|$severity|$description|" | sed -z 's/@@/\\n/g'
-
-}
-
-function Format_readable
-{
- 
-  cat <<EOF
-  path: $path
-  linenr: $linenr
-  check_name: $check_name
-  severity: $severity
-  description: $description
-EOF
-
-}
-
-function Printf
-{
-  printf "%-80s%-10s\n" $File $1
 }
 
 function Prepare
 {
+
+  # Only needed for playbooks with ansible-lint v4 or v5
+  [[ $Ansible_repo_type != playbook || $Ansible_lint_major_version -ge 6 ]] && return
 
   # Delete all roles in requirements.yml
   echo "Deleting all external roles in directory 'roles'"
@@ -172,28 +183,220 @@ function Prepare
   echo "Retrieving all roles as configured in roles/requirements.yml"
   ansible-galaxy.sh -q
 
-  # Search for custom libraries and add to ANSIBLE_LIBRARY
-  Libraries=`ls -d roles/*/library 2>/dev/null`
-  if [[ -n $Libraries ]]
-  then
-    echo "Copy all custom modules"
-    [[ -z $ANSIBLE_LIBRARY ]] && ANSIBLE_LIBRARY=${ANSIBLE_LIBRARY} || ANSIBLE_LIBRARY=${ANSIBLE_LIBRARY}:${ANSIBLE_LIBRARY_TMP}
-    export ANSIBLE_LIBRARY
+#  # Search for custom libraries and add to ANSIBLE_LIBRARY
+#  Libraries=`ls -d roles/*/library 2>/dev/null`
+#  if [[ -n $Libraries ]]
+#  then
+#    echo "Copy all custom modules"
+#    [[ -z $ANSIBLE_LIBRARY ]] && ANSIBLE_LIBRARY=${ANSIBLE_LIBRARY} || ANSIBLE_LIBRARY=${ANSIBLE_LIBRARY}:${ANSIBLE_LIBRARY_TMP}
+#    export ANSIBLE_LIBRARY
+#
+#    # Copy custom modules
+#    for Library in $Libraries
+#    do
+#      cp $Library/* ${ANSIBLE_LIBRARY_TMP}
+#    done
+#  fi
+#
+#  # Delete all roles in requirements.yml
+#  if [[ $Retrieve_roles == false ]]
+#  then
+#    echo "Deleting all external roles in directory 'roles'"
+#    ansible-galaxy.sh -Cq
+#  fi
 
-    # Copy custom modules
-    for Library in $Libraries
-    do
-      cp $Library/* ${ANSIBLE_LIBRARY_TMP}
-    done
+}
+
+function Input_json
+{
+
+  # Get the amount of issues
+  Issue=0
+  Issues=`jq '.|length' ${TMPFILE}`
+
+  # Loop over each item
+  exec 3<<< `jq -r '.[] | @base64' ${TMPFILE}`
+  while read -u3 line
+  do
+
+    # Increment the issue count
+    Issue=$(($Issue+1))
+
+    # Skip if empty array
+    [[ -z $line ]] && continue
+
+    path=`echo "$line" | base64 -d | jq -r '.location.path'`
+    #check_name=`echo "$line" | base64 -d | jq -r '.check_name' | sed "s/.*\[//;s/\].*//"`
+    check_name=`echo "$line" | base64 -d | jq -r '.check_name'`
+    linenr=`echo "$line" | base64 -d | jq -r '.location.lines.begin.line' 2>/dev/null`
+    [[ -z $linenr ]] && linenr=`echo "$line" | base64 -d | jq -r '.location.lines.begin'`
+    severity=`echo "$line" | base64 -d | jq -r '.severity'`
+    description=`echo "$line" | base64 -d | jq -r '.description' | sed -z 's/\n/@@/g;s/@@$/\n/'`
+
+    eval Format_${Output_format}
+    Errors=$(($Errors+1))
+
+  done
+  exec 3<&-
+
+  # In case no issues were found, write an ampty array
+  [[ $Output_format == json && $Issues -eq 0 ]] && echo "[]"
+
+}
+
+function Input_pep8
+{
+
+  # Get the amount of issues
+  Issues=`cat ${TMPFILE} | wc -l`
+  [[ $Issues -eq 0 ]] && return 0
+
+  # Loop over each item
+  exec 3<<< `cat ${TMPFILE}`
+  while read -u3 line
+  do
+    echo "$line"
+    Errors=$(($Errors+1))
+  done
+  exec 3<&-
+
+}
+
+
+function Format_json
+{
+
+  # For the first issue, open the array
+  [[ $Issue == 1 ]] && echo -e "[\c"
+
+  # Write the issue as dict
+  echo "$line" | base64 -d
+  [[ $Issue != $Issues ]] && echo -e ",\c"
+
+  # For the last issues, close the array
+  [[ $Issue == $Issues ]] && echo -e "]"
+
+}
+
+
+function Format_parsable
+{
+
+  if [[ $Verbose == true ]]
+  then
+    echo "$path|$linenr|$check_name|$severity|$description|" | sed -z 's/@@/\\n/g'
+  else
+    echo "$path|$linenr|$check_name|$severity|" | sed -z 's/@@/\\n/g'
   fi
 
-  # Delete all roles in requirements.yml
-  # if [[ $Retrieve_roles == false ]]
-  if [[ $Ansible_type == roles ]]
+}
+
+function Format_readable
+{
+
+  description=`echo $description | sed "s/@@/\n/g" | sed "s/^/  /"`
+
+  cat <<EOF
+-----------------------------------------------------------
+path: $path
+linenr: $linenr
+check_name: $check_name
+severity: $severity
+description: $description
+-----------------------------------------------------------
+EOF
+
+}
+
+function Format_column
+{
+
+  Sep="::"
+
+  if [[ $Verbose == true ]]
   then
-    echo "Deleting all external roles in directory 'roles'"
-    ansible-galaxy.sh -Cq
-  fi 
+    Headers="path${Sep}linenr${Sep}check_name${Sep}severity${Sep}description"
+  else
+    Headers="path${Sep}linenr${Sep}check_name${Sep}severity"
+  fi
+
+  # Write header
+  [[ $Header_written != true ]] && echo "$Headers" && Header_written=true
+
+  # Write 
+  Line=$(echo \"$Headers\" | sed -r "s/([a-z_]+)/\$\\1/g")
+  eval echo $Line
+
+}
+
+function Format_csv
+{
+
+  Sep=","
+
+  if [[ $Verbose == true ]]
+  then
+    Headers="path${Sep}linenr${Sep}check_name${Sep}severity${Sep}description"
+  else  
+    Headers="path${Sep}linenr${Sep}check_name${Sep}severity"
+  fi
+
+  # Write header
+  [[ $Header_written != true ]] && echo "$Headers" && Header_written=true
+
+  # Write 
+  Line=$(echo \"$Headers\" | sed -r "s/([a-z_]+)/\$\\1/g")
+  eval echo $Line
+
+}
+
+function Csv2table
+{
+
+  # Skip if nothing to do
+  [[ ! -s ${TMPFILE}csv ]] && return 0
+
+  # Ensure requirements are installed
+  Install_pip prettytable
+
+  # Create table
+  cat <<EOF > ${TMPFILE}table
+#!/usr/bin/env python3
+from prettytable import from_csv
+with open("${TMPFILE}csv", "r") as fp: 
+    x = from_csv(fp)
+x.align["path"] = "l"
+x.align["linenr"] = "r"
+print(x)
+EOF
+
+  chmod +x ${TMPFILE}table
+  ${TMPFILE}table
+
+}
+
+
+function Printf
+{
+  printf "%-80s%-10s\n" $File $1
+}
+
+function Wrapper
+{
+
+  VENV_ROOT=/data/venv
+
+  local Errors=0
+
+  for venv in ${VENV_ROOT}/*
+  do
+    echo "================================================================================"
+    echo "Activating venv '$venv'"
+    echo "================================================================================"
+    source $venv/bin/activate
+    ansible-lint.sh $Quiet1 || Errors=$(($Errors+1))
+  done
+  return $Errors
 
 }
 
@@ -220,12 +423,13 @@ Single_file=false
 Parallel=false
 Parallel_count=4
 Fix=false
-Retrieve_roles=false
+#Retrieve_roles=false
+Retrieve_roles=true
 Prepare=true
-Output_format=parsable
+Output_format=table
 
 # parse command line into arguments and check results of parsing
-while getopts :dDf:FhrvxX OPT
+while getopts :adDf:FhqrvxX OPT
 do
   # Support long options
   if [[ $OPT = "-" ]] ; then
@@ -235,6 +439,9 @@ do
   fi
 
   case $OPT in
+     a) Wrapper
+        exit $?
+        ;;
      d|debug)
         Verbose=true
         Verbose1="-v"
@@ -252,6 +459,8 @@ do
         ;;
      h) Usage
         exit 0
+        ;;
+     q) Quiet1="-q"
         ;;
      r) Retrieve_roles=true
         ;;
@@ -274,48 +483,45 @@ do
 done
 shift $(($OPTIND -1))
 
+Overwrite_virtualenv
 Check_version
 Ansible_type
 
+if [[ $Ansible_lint_major_version == 4 && $Output_format != pep8 ]]
+then
+  echo "This version of ansible-lint only supports pep8" >&2
+  echo "Falling back to pep8 with severity" >&2
+  Output_format=parsable
+fi
+
 # Playbook preparation
-[[ $Prepare == true && $Ansible_repo_type == playbook ]] && Prepare
+[[ $Prepare == true ]] && Prepare
 
-# Run ansible-lint
-ansible-lint -q -f codeclimate $Tags2skip >${TMPFILE} 2>/dev/null
-
-# Set error count to '0'
+# Set error/issue count to '0'
 Errors=0
 Issue=0
-Issues=`jq '.|length' ${TMPFILE}`
 
-# For json, write array starting
-[[ $Output_format == json ]] && echo -e "[\c"
+# Run ansible-lint
+ansible-lint $Quiet1 $Verbose1 $Args $Tags2skip "$@" >${TMPFILE}
+Errors=$(($Errors+$?))
 
-# Loop over each item
-exec 3<<< `jq -r '.[] | @base64' ${TMPFILE}`
-while read -u3 line
-do
+# Delete messages we expect in verbose mode
+sed -i "/^Found /d;/^Examining/d;/^Unknown file type/d" ${TMPFILE}
 
-  # Increment the issue count
-  Issue=$(($Issue+1))
-
-  # Skip if empty array
-  [[ -z $line ]] && continue
-
-  path=`echo "$line" | base64 -d | jq -r '.location.path'`
-  check_name=`echo "$line" | base64 -d | jq -r '.check_name' | sed "s/.*\[//;s/\].*//"`
-  linenr=`echo "$line" | base64 -d | jq -r '.location.lines.begin.line' 2>/dev/null`
-  [[ -z $linenr ]] && linenr=`echo "$line" | base64 -d | jq -r '.location.lines.begin'`
-  severity=`echo "$line" | base64 -d | jq -r '.severity'`
-  description=`echo "$line" | base64 -d | jq -r '.description' | sed -z 's/\n/@@/g;s/@@$/\n/'`
-
-  eval Format_${Output_format}
-  Errors=$(($Errors+1))
-
-done
-
-# For json, write array closing 
-[[ $Output_format == json ]] && echo -e "]"
+# Convert input
+case $Output_format in
+  column)
+    eval Input_${InputF} | column -t -s "::"
+    ;;
+  table)
+    Output_format=csv
+    eval Input_${InputF} > ${TMPFILE}csv
+    Csv2table
+    ;;
+  *)
+    eval Input_${InputF}
+    ;;
+esac
 
 # Exit now
 exit $Errors
