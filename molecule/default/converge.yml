@@ -5,5 +5,5 @@
   become: "{{ molecule['converge']['become'] | default('yes') }}"
   tasks:
     - name: Include role 'ansible-role-molecule'
-      include_role:
+      ansible.builtin.include_role:
         name: ansible-role-molecule
