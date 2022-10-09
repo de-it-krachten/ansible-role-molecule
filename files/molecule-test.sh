@@ -442,6 +442,27 @@ function Render_molecule_yaml
 
 }
 
+function Patch_ansible29
+{
+
+  ansible=$(pip show ansible 2>/dev/null | awk '/Version:/ {print $2}')
+  ansible_core=$(pip show ansible-core 2>/dev/null | awk '/Version:/ {print $2}')
+  ansible=${ansible:-$ansible_core}
+  echo "Ansible version = $ansible"
+  if [[ $ansible =~ 2.9.* ]]
+  then
+    echo "Patching for Rocky support"
+    site=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+    sed -i "s/'AlmaLinux'\],/'AlmaLinux', 'Rocky'\],/" $site/ansible/module_utils/facts/system/distribution.py
+
+    # echo "Downgrading 'community.general' to '3.8.3'"
+    # ansible-galaxy collection install community.general:3.8.3 --force
+  else
+    echo "No need to patch it"
+  fi
+
+}
+
 
 ##############################################################
 #
@@ -550,6 +571,7 @@ fi
 # Ensure all required packages are installed
 Setup
 Molecule2
+Patch_ansible29
 
 # Test for all needed executables
 Executable_test ansible
