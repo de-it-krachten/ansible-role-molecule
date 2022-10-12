@@ -119,11 +119,11 @@ Verbose_level=0
 Dry_run=false
 Force=false
 Echo=
-Gitignore=true
-Ansible_lint=true
+Gitignore=false
+Ansible_lint=false
 
 # parse command line into arguments and check results of parsing
-while getopts :AdDFGhv-: OPT
+while getopts :aAdDFgGhqv-: OPT
 do
 
   # Support long options
@@ -134,11 +134,15 @@ do
   fi
 
   case $OPT in
+    a)
+      Ansible_lint=true
+      ;;
     A)
       Ansible_lint=false
       ;;
     d|debug)
       Verbose=true
+      Verbose_level=2
       set -vx
       ;;
     D|dry-run)
@@ -149,12 +153,18 @@ do
     F)
       Force=true
       ;;
+    g)
+      Gitignore=true
+      ;;
     G)
       Gitignore=false
       ;;
     h|help)
       Usage
       exit 0
+      ;;
+    q|quiet)
+      Verbose_level=-1
       ;;
     v|verbose)
       Verbose=true
@@ -194,7 +204,7 @@ do
   then
     if [[ -L roles/$Role ]]
     then
-      echo "Leaving symbolic link 'roles/$Role'" >&2
+      [[ $Verbose_level -gt 0 ]] && echo "Leaving symbolic link 'roles/$Role'" >&2
       continue
     elif [[ -d roles/$Role/.git ]]
     then
@@ -202,20 +212,27 @@ do
       then
         $Echo rm -fr roles/$Role
       else
-        echo "Leaving repository 'roles/$Role' due to presence of .git directory" >&2
+        [[ $Verbose_level -gt 0 ]] && echo "Leaving repository 'roles/$Role' due to presence of .git directory" >&2
       fi
     elif [[ -d roles/$Role ]]
     then
-      [[ $Verbose == true ]] && echo "Removing 'role/$Role'" >&2
+      [[ $Verbose_level -gt 0 ]] && echo "Removing 'role/$Role'" >&2
       $Echo rm -fr roles/$Role
     fi
   else
-    [[ $Verbose == true ]] && echo "Role '$Role' not found"
+    [[ $Verbose_level -gt 0 ]] && echo "Role '$Role' not found"
   fi
+
+  # Update .gitignore to exclude external roles
+  [[ $Dry_run == false && $Gitignore == true ]] && Gitignore
+
+  # Update .ansible-lint to exclude external roles
+  [[ $Dry_run == false && $Ansible_lint == true ]] && Ansible_lint
+
 done
 
 # Update .gitignore to exclude external roles
-[[ $Dry_run == false && $Gitignore == true ]] && Gitignore
+#[[ $Dry_run == false && $Gitignore == true ]] && Gitignore
 
 # Update .ansible-lint to exclude external roles
-[[ $Dry_run == false && $Ansible_lint == true ]] && Ansible_lint
+#[[ $Dry_run == false && $Ansible_lint == true ]] && Ansible_lint

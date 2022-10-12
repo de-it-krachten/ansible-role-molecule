@@ -6,6 +6,15 @@
 Install & manage molecule for testing Ansible roles
 
 
+
+## Dependencies
+
+#### Roles
+None
+
+#### Collections
+- community.general
+
 ## Platforms
 
 Supported platforms
@@ -88,6 +97,7 @@ molecule_venvs:
       - requests
 </pre></code>
 
+
 ### vars/Fedora.yml
 <pre><code>
 
@@ -123,6 +133,6 @@ molecule_python_ansible5: /usr/bin/python3
   become: "{{ molecule['converge']['become'] | default('yes') }}"
   tasks:
     - name: Include role 'molecule'
-      include_role:
+      ansible.builtin.include_role:
         name: molecule
 </pre></code>

@@ -60,7 +60,8 @@ HOSTNAME=$(hostname -s)
 ##############################################################
 
 MOLECULE_YAML=molecule/\$Scenario/molecule-test.yml
-MOLECULE_VERSION=$(PY_COLORS=0 molecule --version | awk '/^molecule/ {print $2}')
+MOLECULE_VERSION=$(PY_COLORS=0 molecule --version | awk 'NR==1 {print $NF}')
+[[ ! $MOLECULE_VERSION =~ ^2 ]] && MOLECULE_VERSION=$(PY_COLORS=0 molecule --version | awk '/^molecule/ {print $2}')
 MOLECULE_DISTRO=${MOLECULE_DISTRO:-'rockylinux8'}
 export MOLECULE_DISTRO
 
@@ -128,6 +129,9 @@ Do not delete container after testing
 Only create containers
 \$ $BASENAME -m create
 
+Run on all platforms as found in .molecule-platforms.yml
+\$ $BASENAME -z ALL
+
 EOF
 
 }
@@ -137,6 +141,30 @@ function Setup
 
   Install_pip e2j2
   Install_pip yq
+
+  rm -fr /tmp/roles
+  ansible-galaxy install -r molecule/default/requirements.yml -p /tmp/roles
+
+  echo -e "---\ncollections:\n  - community.docker" > ${TMPFILE}
+  Collections=`ls -d /tmp/roles/*/.collections 2>/dev/null`
+  [[ -n $Collections ]] && yq -y . $Collections | grep "^  - " >> ${TMPFILE}
+
+  ansible-galaxy collection install -r ${TMPFILE}
+
+}
+
+function Molecule2
+{
+
+  Molecule_test=$(yq -r .lint.name molecule/default/molecule.yml 2>/dev/null)
+  if [[ -n $Molecule_test ]]
+  then
+    printf "%80s\n" | tr ' ' "#"
+    echo "Molecule configuration is in unsupported format v2." >&2
+    echo "Please convert to v3 first!" >&2
+    printf "%80s\n" | tr ' ' "#"
+    exit 1
+  fi
 
 }
 
@@ -265,9 +293,43 @@ function Check_role
 
   Scenario=${1:-'default'}
 
+  # Provide support for both molecule v2 and v3/v4
+  if [[ $Scenario == default && -n $CI_SERVER_NAME ]]
+  then
+    if [[ $MOLECULE_VERSION =~ ^2 && -d molecule/defaultv2 ]]
+    then
+      if [[ -d molecule/default ]]
+      then
+        echo "Deleting 'molecule/default'"
+        rm -fr molecule/default
+      fi
+      if [[ -d molecule/defaultv3 ]]
+      then
+        echo "Deleting 'molecule/defaultv3'"
+        rm -fr molecule/defaultv3
+      fi
+      echo "Moving 'molecule/defaultv2' -> 'molecule/default'"
+      mv molecule/defaultv2 molecule/default
+    elif [[ $MOLECULE_VERSION =~ ^(3|4) && -d molecule/defaultv3 ]]
+    then
+      if [[ -d molecule/default ]]
+      then
+        echo "Deleting 'molecule/default'"
+        rm -fr molecule/default
+      fi
+      if [[ -d molecule/defaultv2 ]]
+      then
+        echo "Deleting 'molecule/defaultv2'"
+        rm -fr molecule/defaultv2
+      fi
+      echo "Moving 'molecule/defaultv3' -> 'molecule/default'"
+      mv molecule/defaultv3 molecule/default
+    fi
+  fi
+
   # Message
   Role=`basename $PWD`
-  echo "Processing role '$Role'"
+  echo "Processing role '$Role' with scenario '$Scenario'"
 
   # Test for valid repo
   if [[ ! -f meta/main.yml ]]
@@ -305,8 +367,14 @@ function Execute_molecule
 
   # Set variables for molecule
   export MOLECULE_DEBUG=$Debug
-  export PY_COLORS=1
-  export ANSIBLE_FORCE_COLOR=1
+  if [[ $Colors == true ]]
+  then
+    export PY_COLORS=1
+    export ANSIBLE_FORCE_COLOR=1
+  else
+    export PY_COLORS=0
+    export ANSIBLE_FORCE_COLOR=0
+  fi
 
   case $Mode in
     test)
@@ -353,6 +421,7 @@ function Render_molecule_yaml
   then
 
     # Create JSON with all distributions we want 
+    [[ $Molecule_distributions == ALL ]] && Molecule_distributions=$(echo $(yq -r '.[].name' .molecule-platforms.yml))
     Distros=$(echo $Molecule_distributions | sed "s/,/ /g;s/ /|/g")
     Distros_json=$(yq -cj '. | map(select(.name|test("'$Distros'")))' .molecule-platforms.yml)
 
@@ -369,6 +438,27 @@ function Render_molecule_yaml
     sed -i -r "s/(hostvars\[.*)/\"{{ \\1 }}\"/" molecule.yml
 
     cd - >/dev/null
+  fi
+
+}
+
+function Patch_ansible29
+{
+
+  ansible=$(pip show ansible 2>/dev/null | awk '/Version:/ {print $2}')
+  ansible_core=$(pip show ansible-core 2>/dev/null | awk '/Version:/ {print $2}')
+  ansible=${ansible:-$ansible_core}
+  echo "Ansible version = $ansible"
+  if [[ $ansible =~ 2.9.* ]]
+  then
+    echo "Patching for Rocky support"
+    site=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+    sed -i "s/'AlmaLinux'\],/'AlmaLinux', 'Rocky'\],/" $site/ansible/module_utils/facts/system/distribution.py
+
+    # echo "Downgrading 'community.general' to '3.8.3'"
+    # ansible-galaxy collection install community.general:3.8.3 --force
+  else
+    echo "No need to patch it"
   fi
 
 }
@@ -398,20 +488,24 @@ Modes=test
 Pre_dependency=false
 Verbose_level=0
 Log=true
+Colors=true
 
 # parse command line into arguments and check results of parsing
-while getopts :c:de:DhkKLm:Ps:vxXZ: OPT
+while getopts :c:Cde:DhkKLm:pPs:vxXZ: OPT
 do
    case $OPT in
      c) Role_path=$OPTARG
         ;;
+     C) Colors=false
+        ;;
      d) set -vx
         Debug=true
+        Debug1="-d"
         ;;
      D) Dry_run=true
         Verbose=true
         ;;
-     e) Args="$Args -e $OPTARG"
+     e) Vars_file="$OPTARG"
         ;;
      h) Usage
         exit 0
@@ -451,20 +545,33 @@ do
 done
 shift $(($OPTIND -1))
 
+if [[ -n $Vars_file ]]
+then
+  [[ $Vars_file =~ ^/ ]] || Vars_file=${PWD}/${Vars_file}
+  if [[ ! -f $Vars_file ]]
+  then
+    echo "Variable file '$Vars_file' nout found!" >&2
+    exit 2
+  fi
+  export MOLECULE_ANSIBLE_ARGS="json:[\"--extra-vars=@${Vars_file}\"]"
+fi
+
 # Molecule_distributions: fallback onto '$MOLECULE_DISTRO'
 Molecule_distributions=${Molecule_distributions:-${MOLECULE_DISTRO}}
 
 # destro, create and test without destroy
 if [[ $Destroy_and_setup == true ]]
 then
-  ${DIRNAME}/${BASENAME} -L -m destroy -Z "${Molecule_distributions}" $Verbose1
-  ${DIRNAME}/${BASENAME} -L -m create -Z "${Molecule_distributions}" $Verbose1 || exit $?
-  ${DIRNAME}/${BASENAME} -L -k -Z "${Molecule_distributions}" $Verbose1 || exit $?
+  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -L -m destroy -Z "${Molecule_distributions}" $Verbose1
+  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -L -m create -Z "${Molecule_distributions}" $Verbose1 || exit $?
+  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -L -k -Z "${Molecule_distributions}" $Verbose1 || exit $?
   exit 0
 fi
 
 # Ensure all required packages are installed
 Setup
+Molecule2
+Patch_ansible29
 
 # Test for all needed executables
 Executable_test ansible
@@ -477,6 +584,10 @@ then
   { coproc tee { tee $LOGFILE ;} >&3 ;} 3>&1
   exec >&${tee[1]} 2>&1
 fi
+
+# Show molecule version
+echo "molecule version :"
+molecule --version
 
 # Switch to the role path if specified
 [[ -n ${Role_path} ]] && cd ${Role_path}
