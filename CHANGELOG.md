@@ -1,3 +1,12 @@
+# [1.3.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.2.0...v1.3.0) (2022-10-12)
+
+
+### Features
+
+* Add wrapper around ansible-lint ([97cbde9](https://github.com/de-it-krachten/ansible-role-molecule/commit/97cbde999374db9b2537a3307895b18fb9de4487))
+* Move to FQCN ([8440509](https://github.com/de-it-krachten/ansible-role-molecule/commit/8440509d07fb89ec6a32a05765bda36065b96c5a))
+* Update CI to latest standards ([23525a6](https://github.com/de-it-krachten/ansible-role-molecule/commit/23525a621b18c99196269c7911e1c614959780c7))
+
 # [1.2.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.1.1...v1.2.0) (2022-07-28)
 
 
