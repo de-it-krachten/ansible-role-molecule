@@ -114,6 +114,7 @@ Flags :
                  Useful when depending on custom tasks from other roles (e.g. lint)
    -P          : Do NOT run the dependency phase before test
    -s <names>  : Scenario(s) to execute (divided by comma's)
+   -W          : Wait for 900 seconds after failure
    -x          : Fail if deprecation warning is found
    -X          : Fail if warning is found (non-deprecation)
    -Z <x,y>    : Distributions to test
@@ -150,6 +151,8 @@ function Setup
   [[ -n $Collections ]] && yq -y . $Collections | grep "^  - " >> ${TMPFILE}
 
   ansible-galaxy collection install -r ${TMPFILE}
+
+  Setup=false
 
 }
 
@@ -216,6 +219,9 @@ function Fail_on_deprecation_warning
   sed "/null/d;/\.\.\./d" | \
   sed "s/- '//;s/'$//;s/''/'/g;s/\[/\\\[/;s/\]/\\\]/" > ${TMPFILE}dep
 
+  # Append deprecation warning we expect
+  echo "\\[DEPRECATION WARNING\\]: The container_default_behavior option will change its" >> ${TMPFILE}dep
+
   # Get all deprecation warning not to be ignored
   grep "\[DEPRECATION WARNING\]" ${TMPFILE} | grep -v -f ${TMPFILE}dep > ${TMPFILE}dep1
 
@@ -226,7 +232,15 @@ function Fail_on_deprecation_warning
     echo "One or more deprecation warnings found!" >&2
     echo "#############################################################" >&2
     cat ${TMPFILE}dep1 >&2
+
+    if [[ -n $Wait_after_error ]] 
+    then 
+      echo "Waiting for '$Wait_after_error' seconds"
+      sleep $Wait_after_error
+    fi
+
     exit 1
+
   fi
 
 }
@@ -249,7 +263,15 @@ function Fail_on_warning
     echo "One or more warnings found!" >&2
     echo "#############################################################" >&2
     cat ${TMPFILE}warn1 >&2
+
+    if [[ -n $Wait_after_error ]]
+    then
+      echo "Waiting for '$Wait_after_error' seconds"
+      sleep $Wait_after_error
+    fi
+
     exit 1
+
   fi
 
 }
@@ -405,7 +427,7 @@ function Execute_molecule
   # Fail when a warning was given and failure is required
   [[ $Fail_on_warning == true ]] && Fail_on_warning
 
-  # Exit using the exide code of molecule
+  # Exit using the exit code of molecule
   [[ $Exit_code -gt 0 ]] && exit $Exit_code
 
 }
@@ -424,6 +446,20 @@ function Render_molecule_yaml
     [[ $Molecule_distributions == ALL ]] && Molecule_distributions=$(echo $(yq -r '.[].name' .molecule-platforms.yml))
     Distros=$(echo $Molecule_distributions | sed "s/,/ /g;s/ /|/g")
     Distros_json=$(yq -cj '. | map(select(.name|test("'$Distros'")))' .molecule-platforms.yml)
+
+    # Make sure all distributions are supported
+    for Distro in `echo $Molecule_distributions | sed "s/,/ /g"`
+    do
+      name=$(yq -r '.[] | select(.name=="'$Distro'") | .name' .molecule-platforms.yml)
+      if [[ -z $name ]]
+      then
+        echo "#############################################################" >&2
+        echo "Distribution '$Distro' not found in '.molecule-platforms.yml'" >&2
+        echo "Please check .cicd.overwrite" >&2
+        echo "#############################################################" >&2
+        exit 1
+      fi
+    done
 
     # Show settings in verbose mode
     [[ $Verbose == true ]] && echo "$Distros_json" | jq .
@@ -489,11 +525,20 @@ Pre_dependency=false
 Verbose_level=0
 Log=true
 Colors=true
+Wait_after_error=${MOLECULE_WAIT_AFTER_ERROR:-0}
 
 # parse command line into arguments and check results of parsing
-while getopts :c:Cde:DhkKLm:pPs:vxXZ: OPT
+while getopts :c:Cde:DhkKLm:pPs:SvWxXZ:-: OPT
 do
-   case $OPT in
+
+  # Support long options
+  if [[ $OPT = "-" ]] ; then
+    OPT="${OPTARG%%=*}"       # extract long option name
+    OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
+    OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
+  fi
+
+  case $OPT in
      c) Role_path=$OPTARG
         ;;
      C) Colors=false
@@ -507,7 +552,8 @@ do
         ;;
      e) Vars_file="$OPTARG"
         ;;
-     h) Usage
+     h|help)
+        Usage
         exit 0
         ;;
      k) Destroy=never
@@ -524,9 +570,13 @@ do
         ;;
      s) Scenarios=`echo $OPTARG | sed "s/,/ /g"`
         ;;
+     S) Setup=false
+        ;;
      v) Verbose=true
         Verbose_level=$(($Verbose_level+1))
         Verbose1="$Verbose1 -v"
+        ;;
+     W) Wait_after_error=900
         ;;
      x) Fail_on_deprecation_warning=true
         ;;
@@ -569,8 +619,7 @@ then
 fi
 
 # Ensure all required packages are installed
-Setup
-Molecule2
+[[ $Setup == true ]] && Setup
 Patch_ansible29
 
 # Test for all needed executables
@@ -596,7 +645,7 @@ molecule --version
 if [[ -d roles ]]
 then
   # Clean all present roles not directlry part of this repository
-  ansible-requirements-clean.sh -F -v
+  ansible-requirements-clean.sh -F -v -q
   Nested_roles=true
   Roles=`ls roles | grep -v requirements.yml`
 elif [[ ( ! -d tasks && ! -d library ) || -d group_vars || -d playbooks ]]
@@ -619,6 +668,9 @@ do
 
   # Jump to role directory when included in playbook repo
   [[ $Nested_roles == true ]] && cd roles/$Role
+
+  # Make sure molecule configuration is >= v3
+  Molecule2
 
   # Fix requirement.yml (git/pubkey --> https/token)
   Fix_requirements_role
