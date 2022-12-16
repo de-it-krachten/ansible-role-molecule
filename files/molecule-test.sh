@@ -140,19 +140,33 @@ EOF
 function Setup
 {
 
+  # No need to execute this function a second tile
+  [[ $Setup_executed == true ]] && return 0
+
+  # Install pypi packages we need
   Install_pip e2j2
   Install_pip yq
 
+  # Get all roles needed by molecule
   rm -fr /tmp/roles
   ansible-galaxy install -r molecule/default/requirements.yml -p /tmp/roles
 
-  echo -e "---\ncollections:\n  - community.docker" > ${TMPFILE}
-  Collections=`ls -d /tmp/roles/*/.collections 2>/dev/null`
-  [[ -n $Collections ]] && yq -y . $Collections | grep "^  - " >> ${TMPFILE}
+  # Create combined list of collections we need
+  echo -e "---\ncollections:" > ${TMPFILE}
+  echo "community.docker" > ${TMPFILE}1
+  Collections=`ls -d .collections /tmp/roles/*/.collections 2>/dev/null`
+  [[ -n $Collections ]] && yq -y . $Collections | grep "^  - " | sed "s/^  - //" >> ${TMPFILE}1
+  sort -u ${TMPFILE}1 | sed "s/^/  - /" >> ${TMPFILE}
 
+  # Show collections file
+  echo "The following collections will be installed :"
+  sort -u ${TMPFILE}1 | sed "s/^/- /"
+
+  # Install all collections
   ansible-galaxy collection install -r ${TMPFILE}
 
-  Setup=false
+  # Make this step not run a second time
+  Setup_executed=true
 
 }
 
@@ -526,9 +540,10 @@ Verbose_level=0
 Log=true
 Colors=true
 Wait_after_error=${MOLECULE_WAIT_AFTER_ERROR:-0}
+Setup=true
 
 # parse command line into arguments and check results of parsing
-while getopts :c:Cde:DhkKLm:pPs:SvWxXZ:-: OPT
+while getopts :c:Cde:DhkKLm:pPs:SvWxXzZ:-: OPT
 do
 
   # Support long options
@@ -582,6 +597,8 @@ do
         ;;
      X) Fail_on_warning=true
         ;;
+     z) Molecule_distributions="ubuntu2004,debian11,rockylinux8"
+        ;;
      Z) Molecule_distributions=$(echo $Molecule_distributions $OPTARG)
         ;;
      *) echo "Unknown flag -$OPT given!" >&2
@@ -595,12 +612,13 @@ do
 done
 shift $(($OPTIND -1))
 
+# Variable file
 if [[ -n $Vars_file ]]
 then
   [[ $Vars_file =~ ^/ ]] || Vars_file=${PWD}/${Vars_file}
   if [[ ! -f $Vars_file ]]
   then
-    echo "Variable file '$Vars_file' nout found!" >&2
+    echo "Variable file '$Vars_file' not found!" >&2
     exit 2
   fi
   export MOLECULE_ANSIBLE_ARGS="json:[\"--extra-vars=@${Vars_file}\"]"
@@ -608,6 +626,12 @@ fi
 
 # Molecule_distributions: fallback onto '$MOLECULE_DISTRO'
 Molecule_distributions=${Molecule_distributions:-${MOLECULE_DISTRO}}
+
+# Ensure all required packages & collections are installed
+[[ $Setup == true ]] && Setup
+
+# For Ansible 2.9 we will need to patch in order to support RockyLinux
+Patch_ansible29
 
 # destro, create and test without destroy
 if [[ $Destroy_and_setup == true ]]
@@ -617,10 +641,6 @@ then
   ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -L -k -Z "${Molecule_distributions}" $Verbose1 || exit $?
   exit 0
 fi
-
-# Ensure all required packages are installed
-[[ $Setup == true ]] && Setup
-Patch_ansible29
 
 # Test for all needed executables
 Executable_test ansible
