@@ -24,6 +24,7 @@ Supported platforms
 - RockyLinux 8
 - RockyLinux 9
 - OracleLinux 8
+- OracleLinux 9
 - AlmaLinux 8
 - AlmaLinux 9
 - Debian 11 (Bullseye)
@@ -130,7 +131,7 @@ molecule_python_ansible5: /usr/bin/python3
 <pre><code>
 - name: sample playbook for role 'molecule'
   hosts: all
-  become: "{{ molecule['converge']['become'] | default('yes') }}"
+  become: "yes"
   tasks:
     - name: Include role 'molecule'
       ansible.builtin.include_role:

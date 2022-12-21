@@ -35,9 +35,11 @@
       - rocky9
       - almalinux8
       - almalinux9
-
     systemctl_alternative: False
     activate_epel: True
+  roles:
+    - showinfo
+    - facts
   tasks:
 
     - name: Create remote_tmp
@@ -68,6 +70,7 @@
           no_proxy: "{{ no_proxy }}"
           prepare_firewall: "{{ prepare_firewall | default(False) }}"
           update_all: "{{ update_all | default(False) }}"
+          activate_epel: "{{ activate_epel | default(False) }}"
 
     - name: Enable root access
       when:
