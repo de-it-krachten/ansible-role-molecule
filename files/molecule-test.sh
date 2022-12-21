@@ -149,13 +149,13 @@ function Setup
 
   # Get all roles needed by molecule
   rm -fr /tmp/roles
-  ansible-galaxy install -r molecule/default/requirements.yml -p /tmp/roles
+  ansible-galaxy install -r molecule/default/requirements.yml -p /tmp/roles || exit 1
 
   # Create combined list of collections we need
   echo -e "---\ncollections:" > ${TMPFILE}
   echo "community.docker" > ${TMPFILE}1
   Collections=`ls -d .collections /tmp/roles/*/.collections 2>/dev/null`
-  [[ -n $Collections ]] && yq -y . $Collections | grep "^  - " | sed "s/^  - //" >> ${TMPFILE}1
+  [[ -n $Collections ]] && yq -y . $Collections | grep "^  - " | sed "s/^  - //" | grep -vE "^(ansible\.builtin)$" >> ${TMPFILE}1
   sort -u ${TMPFILE}1 | sed "s/^/  - /" >> ${TMPFILE}
 
   # Show collections file
@@ -163,10 +163,10 @@ function Setup
   sort -u ${TMPFILE}1 | sed "s/^/- /"
 
   # Install all collections
-  ansible-galaxy collection install -r ${TMPFILE}
+  ansible-galaxy collection install -r ${TMPFILE} || exit 1
 
   # Make this step not run a second time
-  Setup_executed=true
+  export Setup_executed=true
 
 }
 
@@ -503,7 +503,7 @@ function Patch_ansible29
   then
     echo "Patching for Rocky support"
     site=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
-    sed -i "s/'AlmaLinux'\],/'AlmaLinux', 'Rocky'\],/" $site/ansible/module_utils/facts/system/distribution.py
+    $Sudo sed -i "s/'AlmaLinux'\],/'AlmaLinux', 'Rocky'\],/" $site/ansible/module_utils/facts/system/distribution.py
 
     # echo "Downgrading 'community.general' to '3.8.3'"
     # ansible-galaxy collection install community.general:3.8.3 --force
@@ -541,6 +541,9 @@ Log=true
 Colors=true
 Wait_after_error=${MOLECULE_WAIT_AFTER_ERROR:-0}
 Setup=true
+
+# Sudo command for non-root
+[[ `id -un` != root ]] && Sudo=sudo
 
 # parse command line into arguments and check results of parsing
 while getopts :c:Cde:DhkKLm:pPs:SvWxXzZ:-: OPT
