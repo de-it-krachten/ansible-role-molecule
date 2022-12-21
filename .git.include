@@ -1,4 +1,7 @@
+../../git-tools/generic/functions.sh                  files/
 ../../git-tools/molecule/molecule-test.sh             files/
+../../git-tools/ansible/ansible-collections.sh        files/
+../../git-tools/ansible/ansible-fix.sh                files/
 ../../git-tools/ansible/ansible-galaxy.sh             files/
 ../../git-tools/ansible/ansible-lint.sh               files/
 ../../git-tools/ansible/ansible-requirements-clean.sh files/

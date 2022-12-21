@@ -600,7 +600,7 @@ do
         ;;
      X) Fail_on_warning=true
         ;;
-     z) Molecule_distributions="ubuntu2004,debian11,rockylinux8"
+     z) Molecule_distributions="ubuntu2004,debian11,rockylinux8,fedora36"
         ;;
      Z) Molecule_distributions=$(echo $Molecule_distributions $OPTARG)
         ;;

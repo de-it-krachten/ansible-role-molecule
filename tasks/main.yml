@@ -46,7 +46,11 @@
     dest: /usr/local/bin/{{ item }}
     mode: "0755"
   loop:
-    - molecule-test.sh
+    - ansible-collections.sh
+    - ansible-fix.sh
     - ansible-galaxy.sh
     - ansible-lint.sh
     - ansible-requirements-clean.sh
+    - functions_ansible.sh
+    - functions.sh
+    - molecule-test.sh
