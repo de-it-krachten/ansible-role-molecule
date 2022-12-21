@@ -1,0 +1,6 @@
+---
+
+# Ansible version not supported
+molecule_ansible5_state: skip
+molecule_ansible6_state: skip
+molecule_ansible7_state: skip

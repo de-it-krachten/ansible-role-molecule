@@ -1,17 +1,7 @@
 ---
 
 - name: Load variables based on OS type
-  ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
-  vars:
-    params:
-      files:
-        - "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
-        - "{{ ansible_distribution }}.yml"
-        - "family-{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml"
-        - "family-{{ ansible_os_family }}.yml"
-        - default.yml
-      paths:
-        - 'vars'
+  ansible.builtin.include_tasks: vars.yml
 
 - name: Install python3
   ansible.builtin.include_role:
@@ -19,6 +9,8 @@
   vars:
     python2: false
     python3: true
+    python38: "{{ molecule_python38 }}"
+    python39: "{{ molecule_python39 }}"
 
 - name: Uninstall python3 packages
   ansible.builtin.package:
