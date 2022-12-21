@@ -11,6 +11,7 @@
     python3: true
     python38: "{{ molecule_python38 }}"
     python39: "{{ molecule_python39 }}"
+  when: molecule_python_install | bool
 
 - name: Uninstall python3 packages
   ansible.builtin.package:
@@ -38,6 +39,7 @@
   vars:
     python_virtualenv_root: "{{ molecule_venv_root }}"
     python_virtualenvs: "{{ molecule_venvs }}"
+  when: molecule_python_venv | bool
   tags: molecule-idempotence-notest
 
 - name: Distribute all support scripts & files
