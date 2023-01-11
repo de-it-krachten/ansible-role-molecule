@@ -1,3 +1,18 @@
+# [1.4.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.3.0...v1.4.0) (2023-01-11)
+
+
+### Bug Fixes
+
+* Fix issue with molecule-test.sh ([fb49b8c](https://github.com/de-it-krachten/ansible-role-molecule/commit/fb49b8ccc54d3b80c3368690977fd1ad0efdddf6))
+* Make python installation optional ([13db41b](https://github.com/de-it-krachten/ansible-role-molecule/commit/13db41b8ec29ff7bedaa57cf3f2059a35b0afb28))
+* Make python related tasks optional ([cb78371](https://github.com/de-it-krachten/ansible-role-molecule/commit/cb78371d6a46875b3c554036f9288dd8dcdcc82f))
+
+
+### Features
+
+* Add ansible6/ansible7 virtual environments ([ce8ff70](https://github.com/de-it-krachten/ansible-role-molecule/commit/ce8ff70f2bee75428deff7369e5054fd33d718b6))
+* Add extra scripts for collection support ([a9461ad](https://github.com/de-it-krachten/ansible-role-molecule/commit/a9461ad924cdc4fca7ab379695a237bcfa41c706))
+
 # [1.3.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.2.0...v1.3.0) (2022-10-12)
 
 
