@@ -137,6 +137,27 @@ EOF
 
 }
 
+function Showinfo
+{
+
+  echo -e "\n\e[35mansible version:\e[0m"
+  ansible --version
+
+  echo -e "\n\e[35mansible-lint version:\e[0m"
+  ansible-lint --version
+
+  echo -e "\n\e[35mmolecule version:\e[0m"
+  molecule --version
+
+  echo -e "\n\e[35mpython modules:\e[0m"
+  pip3 list
+
+  echo -e "\n\e[35mansible collections:\e[0m"
+  ansible-galaxy collection list
+  echo
+
+}
+
 function Setup
 {
 
@@ -151,19 +172,8 @@ function Setup
   rm -fr /tmp/roles
   ansible-galaxy install -r molecule/default/requirements.yml -p /tmp/roles || exit 1
 
-  # Create combined list of collections we need
-  echo -e "---\ncollections:" > ${TMPFILE}
-  echo "community.docker" > ${TMPFILE}1
-  Collections=`ls -d .collections /tmp/roles/*/.collections 2>/dev/null`
-  [[ -n $Collections ]] && yq -y . $Collections | grep "^  - " | sed "s/^  - //" | grep -vE "^(ansible\.builtin)$" >> ${TMPFILE}1
-  sort -u ${TMPFILE}1 | sed "s/^/  - /" >> ${TMPFILE}
-
-  # Show collections file
-  echo "The following collections will be installed :"
-  sort -u ${TMPFILE}1 | sed "s/^/- /"
-
-  # Install all collections
-  ansible-galaxy collection install -r ${TMPFILE} || exit 1
+  # Get all collections needed by molecule
+  ansible-collections.sh -r /tmp/roles || exit 1
 
   # Make this step not run a second time
   export Setup_executed=true
@@ -657,9 +667,8 @@ then
   exec >&${tee[1]} 2>&1
 fi
 
-# Show molecule version
-echo "molecule version :"
-molecule --version
+# Show molecule/ansible versions
+Showinfo
 
 # Switch to the role path if specified
 [[ -n ${Role_path} ]] && cd ${Role_path}

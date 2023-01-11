@@ -589,7 +589,6 @@ Ansible_type
 # Playbook preparation
 [[ $Prepare == true ]] && Prepare
 
-
 # Convert input
 case $Output_format in
   c|csv)

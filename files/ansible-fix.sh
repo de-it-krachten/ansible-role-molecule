@@ -125,8 +125,12 @@ Flags :
    -v|--verbose     : Verbose output
 
    -a|--all         : Run on all files in the current path recursively
+   -e|--task <task> : Task to run (can be run multiple times)
    -s|--skip <task> : Task to skip (can be run multiple times)
    -t|type <type>   : Manually picks type of file (can be one of tasks, vars or meta)
+
+Tasks:
+`echo "$TASKS" | awk '{print $1}' | sed "s/^/  /"`
 
 Examples:
 Run scripts on all files within a directory tree
@@ -148,12 +152,20 @@ function Fix_file
 
   # Identify file type based on name
   Type=${Type_overwrite:-""}
+  # tasks
   [[ -z $Type && $File =~ ^([a-zA-Z0-9_-]+\.yml|playbooks/|tasks/|handlers/) ]] && Type=tasks
+  [[ -z $Type && $File =~ ^(roles/[a-z]+/tasks/|roles/[a-z]+/handlers/) ]] && Type=tasks
+  [[ -z $Type && $File =~ ^tests/(playbooks|test).yml ]] && Type=tasks
+  [[ -z $Type && $File =~ ^(tasks-handlers/) ]] && Type=tasks
+  # variables
   [[ -z $Type && $File =~ ^(host_vars/|group_vars/|vars/|defaults/) ]] && Type=vars
+  [[ -z $Type && $File =~ ^(roles/[a-z]+/vars/|roles/[a-z]+/defaults/) ]] && Type=vars
+  [[ -z $Type && $File =~ ^tests/vars.yml ]] && Type=vars
+  # meta
   [[ -z $Type && $File =~ ^(meta/) ]] && Type=meta
   [[ -z $Type && $File =~ ^(roles/requirements.yml$) ]] && Type=meta
-  [[ -z $Type && $File =~ ^tests/(playbooks|test).yml ]] && Type=tasks
-  [[ -z $Type && $File =~ ^tests/vars.yml ]] && Type=vars
+  [[ -z $Type && $File =~ ^(roles/[a-z]+/meta/) ]] && Type=meta
+
   [[ -z $Type ]] && echo "Unable to identify type" >&2 && exit 1
 
   [[ $Verbose == true ]] && echo "Type = $Type"
@@ -165,6 +177,7 @@ function Fix_file
     [[ -z $Task ]] && continue
     [[ $Task == \#* ]] && continue
     [[ $Task =~ ^($Skip_tasks)$ ]] && continue
+    [[ -n $Execute_tasks && ! $Task =~ ^($Execute_tasks)$ ]] && continue 
 
     if [[ $Type == tasks && $Tasks == Y ]]
     then
@@ -363,10 +376,10 @@ Echo=
 
 All=false
 Skip_tasks="dummy"
-Skip_files="dummy"
+Skip_files=".gitlab-ci.yml"
 
 # parse command line into arguments and check results of parsing
-while getopts :adDhs:S:t:v-: OPT
+while getopts :adDe:hs:S:t:v-: OPT
 do
 
   # Support long options
@@ -393,6 +406,9 @@ do
       Dry_run=true
       Dry_run1="-D"
       Echo=echo
+      ;;
+    e|task)
+      Execute_tasks="$Execute_tasks|$OPTARG"
       ;;
     h|help)
       Usage
