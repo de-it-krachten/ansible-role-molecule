@@ -2,7 +2,9 @@
 
 - name: Converge
   hosts: all
-  become: "{{ molecule['converge']['become'] | default('yes') }}"
+  become: "yes"
+  vars:
+    molecule_python_install: True
   tasks:
     - name: Include role 'ansible-role-molecule'
       ansible.builtin.include_role:

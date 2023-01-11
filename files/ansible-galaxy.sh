@@ -12,7 +12,7 @@ Quiet=false
 Exit=
 
 # parse command line into arguments and check results of parsing
-while getopts :cCdDGhq OPT
+while getopts :cCdDGhqr OPT
 do
    case $OPT in
      c) Clean=true
@@ -36,6 +36,8 @@ do
         Clean_args="${Clean_args} -q"
         Exit=0
         ;;
+     r) Refresh=true
+        ;;
      *) echo "Unknown flag -$OPT given!" >&2
         exit 1
         ;;
@@ -53,7 +55,7 @@ then
   exit ${Exit:-1}
 fi
 
-[[ $Clean == true ]] && ${DIRNAME}/ansible-requirements-clean.sh ${Clean_args}
+[[ $Refresh == true || $Clean == true ]] && ${DIRNAME}/ansible-requirements-clean.sh ${Clean_args}
 [[ $Clean_only == true ]] && exit 0
 
 $Echo ansible-galaxy install -r roles/requirements.yml -p roles/ --ignore-errors

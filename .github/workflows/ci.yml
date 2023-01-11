@@ -40,17 +40,21 @@ jobs:
             ansible_lint: "ansible-lint>6,<7"
           - name: "ansible_2.13"
             # ansible: "ansible>6,<7"
-            ansible: "ansible-core<2.13,<2.14"
+            ansible: "ansible-core>2.13,<2.14"
             ansible_lint: "ansible-lint>6,<7"
+          - name: "ansible_2.14"
+            # ansible: "ansible>6,<7"
+            ansible: "ansible-core>2.14,<2.15"
+            ansible_lint: "ansible-lint"
 
     steps:
       - name: Check out the codebase.
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: "${{ github.repository }}"
 
       - name: Set up Python 3.
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
@@ -69,28 +73,29 @@ jobs:
         run: |
           pip3 install "${{ matrix.ansible }}" "${{ matrix.ansible_lint }}" yamllint jmespath e2j2 yq
 
-      - name: Patch Ansible 2.9 to support Rocky Linux
-        run: |
-          ansible=$(pip show ansible 2>/dev/null | awk '/Version:/ {print $2}')
-          ansible_core=$(pip show ansible-core 2>/dev/null | awk '/Version:/ {print $2}')
-          ansible=${ansible:-$ansible_core}
-          if [[ $ansible =~ 2.9.* ]]
-          then
-            echo "Ansible version = $ansible"
-            echo "Patching ansible 2.9 for Rocky support"
-            site=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
-            sed -i "s/'AlmaLinux'\],/'AlmaLinux', 'Rocky'\],/" $site/ansible/module_utils/facts/system/distribution.py
-          else
-            echo "Ansible version = $ansible"
-            echo "No need to patch it"
-          fi
-
       - name: Install required galaxy collections
         run: |
           ansible-galaxy collection install community.docker
           ansible-galaxy collection install community.general
           ansible-galaxy collection install ansible.posix
           ansible-galaxy collection install -r .collections
+
+      - name: For ansible 2.9, we need to perform some tweaking
+        run: |
+          ansible=$(pip show ansible 2>/dev/null | awk '/Version:/ {print $2}')
+          ansible_core=$(pip show ansible-core 2>/dev/null | awk '/Version:/ {print $2}')
+          ansible=${ansible:-$ansible_core}
+          echo "Ansible version = $ansible"
+          if [[ $ansible =~ 2.9.* ]]
+          then
+            echo "Patching for Rocky support"
+            site=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+            sed -i "s/'AlmaLinux'\],/'AlmaLinux', 'Rocky'\],/" $site/ansible/module_utils/facts/system/distribution.py
+            echo "Downgrading 'community.general' to '3.8.3'"
+            ansible-galaxy collection install community.general:3.8.3 --force
+          else
+            echo "No need to patch it"
+          fi
 
       - name: Retrieve wrapper scripts
         run: |
@@ -126,7 +131,7 @@ jobs:
 
   molecule:
     name: "${{ matrix.name }}"
-    runs-on: ubuntu-latest
+    runs-on: "${{ matrix.runs_on }}"
     needs: lint
     # continue-on-error: ${{ matrix.continue_on_error }}
     strategy:
@@ -134,110 +139,143 @@ jobs:
       matrix:
         include:
           - name: rockylinux8_2.9
+            runs_on: ubuntu-latest
             distro: rockylinux8
             playbook: converge.yml
             ansible: "ansible==2.9.27"
             ansible_lint: "ansible-lint==5.4.0"
           - name: rockylinux8_2.13
+            runs_on: ubuntu-latest
             distro: rockylinux8
             playbook: converge.yml
             ansible: "ansible-core>2.13,<2.14"
             ansible_lint: "ansible-lint>6,<7"
 
           - name: rockylinux9_2.9
+            runs_on: ubuntu-latest
             distro: rockylinux9
             playbook: converge.yml
             ansible: "ansible==2.9.27"
             ansible_lint: "ansible-lint==5.4.0"
           - name: rockylinux9_2.13
+            runs_on: ubuntu-latest
             distro: rockylinux9
             playbook: converge.yml
             ansible: "ansible-core>2.13,<2.14"
             ansible_lint: "ansible-lint>6,<7"
 
           - name: oraclelinux8_2.9
+            runs_on: ubuntu-latest
             distro: oraclelinux8
             playbook: converge.yml
             ansible: "ansible==2.9.27"
             ansible_lint: "ansible-lint==5.4.0"
           - name: oraclelinux8_2.13
+            runs_on: ubuntu-latest
             distro: oraclelinux8
             playbook: converge.yml
             ansible: "ansible-core>2.13,<2.14"
             ansible_lint: "ansible-lint>6,<7"
 
+          - name: oraclelinux9_2.9
+            runs_on: ubuntu-latest
+            distro: oraclelinux9
+            playbook: converge.yml
+            ansible: "ansible==2.9.27"
+            ansible_lint: "ansible-lint==5.4.0"
+          - name: oraclelinux9_2.13
+            runs_on: ubuntu-latest
+            distro: oraclelinux9
+            playbook: converge.yml
+            ansible: "ansible-core>2.13,<2.14"
+            ansible_lint: "ansible-lint>6,<7"
+
           - name: almalinux8_2.9
+            runs_on: ubuntu-latest
             distro: almalinux8
             playbook: converge.yml
             ansible: "ansible==2.9.27"
             ansible_lint: "ansible-lint==5.4.0"
           - name: almalinux8_2.13
+            runs_on: ubuntu-latest
             distro: almalinux8
             playbook: converge.yml
             ansible: "ansible-core>2.13,<2.14"
             ansible_lint: "ansible-lint>6,<7"
 
           - name: almalinux9_2.9
+            runs_on: ubuntu-latest
             distro: almalinux9
             playbook: converge.yml
             ansible: "ansible==2.9.27"
             ansible_lint: "ansible-lint==5.4.0"
           - name: almalinux9_2.13
+            runs_on: ubuntu-latest
             distro: almalinux9
             playbook: converge.yml
             ansible: "ansible-core>2.13,<2.14"
             ansible_lint: "ansible-lint>6,<7"
 
           - name: debian11_2.9
+            runs_on: ubuntu-latest
             distro: debian11
             playbook: converge.yml
             ansible: "ansible==2.9.27"
             ansible_lint: "ansible-lint==5.4.0"
           - name: debian11_2.13
+            runs_on: ubuntu-latest
             distro: debian11
             playbook: converge.yml
             ansible: "ansible-core>2.13,<2.14"
             ansible_lint: "ansible-lint>6,<7"
 
           - name: ubuntu2004_2.9
+            runs_on: ubuntu-latest
             distro: ubuntu2004
             playbook: converge.yml
             ansible: "ansible==2.9.27"
             ansible_lint: "ansible-lint==5.4.0"
           - name: ubuntu2004_2.13
+            runs_on: ubuntu-latest
             distro: ubuntu2004
             playbook: converge.yml
             ansible: "ansible-core>2.13,<2.14"
             ansible_lint: "ansible-lint>6,<7"
 
           - name: ubuntu2204_2.9
+            runs_on: ubuntu-latest
             distro: ubuntu2204
             playbook: converge.yml
             ansible: "ansible==2.9.27"
             ansible_lint: "ansible-lint==5.4.0"
           - name: ubuntu2204_2.13
+            runs_on: ubuntu-latest
             distro: ubuntu2204
             playbook: converge.yml
             ansible: "ansible-core>2.13,<2.14"
             ansible_lint: "ansible-lint>6,<7"
 
           - name: fedora35_2.9
+            runs_on: ubuntu-latest
             distro: fedora35
             playbook: converge.yml
             ansible: "ansible==2.9.27"
             ansible_lint: "ansible-lint==5.4.0"
           - name: fedora35_2.13
+            runs_on: ubuntu-latest
             distro: fedora35
             playbook: converge.yml
             ansible: "ansible-core>2.13,<2.14"
             ansible_lint: "ansible-lint>6,<7"
 
           - name: fedora36_2.9
+            runs_on: ubuntu-latest
             distro: fedora36
             playbook: converge.yml
             ansible: "ansible==2.9.27"
             ansible_lint: "ansible-lint==5.4.0"
           - name: fedora36_2.13
+            runs_on: ubuntu-latest
             distro: fedora36
             playbook: converge.yml
             ansible: "ansible-core>2.13,<2.14"
@@ -245,13 +283,15 @@ jobs:
 
 
     steps:
+
       - name: Check out the codebase.
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: "${{ github.repository }}"
 
+
       - name: Set up Python 3.
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
@@ -268,23 +308,7 @@ jobs:
 
       - name: Install test dependencies.
         run: |
-          pip3 install "${{ matrix.ansible }}" "${{ matrix.ansible_lint }}" molecule[docker] molecule-hetznercloud docker yamllint jmespath e2j2 yq
-
-      - name: Patch Ansible 2.9 to support Rocky Linux
-        run: |
-          ansible=$(pip show ansible 2>/dev/null | awk '/Version:/ {print $2}')
-          ansible_core=$(pip show ansible-core 2>/dev/null | awk '/Version:/ {print $2}')
-          ansible=${ansible:-$ansible_core}
-          if [[ $ansible =~ 2.9.* ]]
-          then
-            echo "Ansible version = $ansible"
-            echo "Patching ansible 2.9 for Rocky support"
-            site=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
-            sed -i "s/'AlmaLinux'\],/'AlmaLinux', 'Rocky'\],/" $site/ansible/module_utils/facts/system/distribution.py
-          else
-            echo "Ansible version = $ansible"
-            echo "No need to patch it"
-          fi
+          pip3 install "${{ matrix.ansible }}" "${{ matrix.ansible_lint }}" molecule[docker] yamllint jmespath e2j2 yq
 
       - name: Install required galaxy collections
         run: |
@@ -292,6 +316,23 @@ jobs:
           ansible-galaxy collection install community.general
           ansible-galaxy collection install ansible.posix
           ansible-galaxy collection install -r .collections
+
+      - name: For ansible 2.9, we need to perform some tweaking
+        run: |
+          ansible=$(pip show ansible 2>/dev/null | awk '/Version:/ {print $2}')
+          ansible_core=$(pip show ansible-core 2>/dev/null | awk '/Version:/ {print $2}')
+          ansible=${ansible:-$ansible_core}
+          echo "Ansible version = $ansible"
+          if [[ $ansible =~ 2.9.* ]]
+          then
+            echo "Patching for Rocky support"
+            site=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+            sed -i "s/'AlmaLinux'\],/'AlmaLinux', 'Rocky'\],/" $site/ansible/module_utils/facts/system/distribution.py
+            echo "Downgrading 'community.general' to '3.8.3'"
+            ansible-galaxy collection install community.general:3.8.3 --force
+          else
+            echo "No need to patch it"
+          fi
 
       - name: Set-up github runner
         run: |

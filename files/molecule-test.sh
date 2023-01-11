@@ -114,6 +114,7 @@ Flags :
                  Useful when depending on custom tasks from other roles (e.g. lint)
    -P          : Do NOT run the dependency phase before test
    -s <names>  : Scenario(s) to execute (divided by comma's)
+   -W          : Wait for 900 seconds after failure
    -x          : Fail if deprecation warning is found
    -X          : Fail if warning is found (non-deprecation)
    -Z <x,y>    : Distributions to test
@@ -139,17 +140,33 @@ EOF
 function Setup
 {
 
+  # No need to execute this function a second tile
+  [[ $Setup_executed == true ]] && return 0
+
+  # Install pypi packages we need
   Install_pip e2j2
   Install_pip yq
 
+  # Get all roles needed by molecule
   rm -fr /tmp/roles
-  ansible-galaxy install -r molecule/default/requirements.yml -p /tmp/roles
+  ansible-galaxy install -r molecule/default/requirements.yml -p /tmp/roles || exit 1
 
-  echo -e "---\ncollections:\n  - community.docker" > ${TMPFILE}
-  Collections=`ls -d /tmp/roles/*/.collections 2>/dev/null`
-  [[ -n $Collections ]] && yq -y . $Collections | grep "^  - " >> ${TMPFILE}
+  # Create combined list of collections we need
+  echo -e "---\ncollections:" > ${TMPFILE}
+  echo "community.docker" > ${TMPFILE}1
+  Collections=`ls -d .collections /tmp/roles/*/.collections 2>/dev/null`
+  [[ -n $Collections ]] && yq -y . $Collections | grep "^  - " | sed "s/^  - //" | grep -vE "^(ansible\.builtin)$" >> ${TMPFILE}1
+  sort -u ${TMPFILE}1 | sed "s/^/  - /" >> ${TMPFILE}
 
-  ansible-galaxy collection install -r ${TMPFILE}
+  # Show collections file
+  echo "The following collections will be installed :"
+  sort -u ${TMPFILE}1 | sed "s/^/- /"
+
+  # Install all collections
+  ansible-galaxy collection install -r ${TMPFILE} || exit 1
+
+  # Make this step not run a second time
+  export Setup_executed=true
 
 }
 
@@ -216,6 +233,9 @@ function Fail_on_deprecation_warning
   sed "/null/d;/\.\.\./d" | \
   sed "s/- '//;s/'$//;s/''/'/g;s/\[/\\\[/;s/\]/\\\]/" > ${TMPFILE}dep
 
+  # Append deprecation warning we expect
+  echo "\\[DEPRECATION WARNING\\]: The container_default_behavior option will change its" >> ${TMPFILE}dep
+
   # Get all deprecation warning not to be ignored
   grep "\[DEPRECATION WARNING\]" ${TMPFILE} | grep -v -f ${TMPFILE}dep > ${TMPFILE}dep1
 
@@ -226,7 +246,15 @@ function Fail_on_deprecation_warning
     echo "One or more deprecation warnings found!" >&2
     echo "#############################################################" >&2
     cat ${TMPFILE}dep1 >&2
+
+    if [[ -n $Wait_after_error ]] 
+    then 
+      echo "Waiting for '$Wait_after_error' seconds"
+      sleep $Wait_after_error
+    fi
+
     exit 1
+
   fi
 
 }
@@ -249,7 +277,15 @@ function Fail_on_warning
     echo "One or more warnings found!" >&2
     echo "#############################################################" >&2
     cat ${TMPFILE}warn1 >&2
+
+    if [[ -n $Wait_after_error ]]
+    then
+      echo "Waiting for '$Wait_after_error' seconds"
+      sleep $Wait_after_error
+    fi
+
     exit 1
+
   fi
 
 }
@@ -405,7 +441,7 @@ function Execute_molecule
   # Fail when a warning was given and failure is required
   [[ $Fail_on_warning == true ]] && Fail_on_warning
 
-  # Exit using the exide code of molecule
+  # Exit using the exit code of molecule
   [[ $Exit_code -gt 0 ]] && exit $Exit_code
 
 }
@@ -424,6 +460,20 @@ function Render_molecule_yaml
     [[ $Molecule_distributions == ALL ]] && Molecule_distributions=$(echo $(yq -r '.[].name' .molecule-platforms.yml))
     Distros=$(echo $Molecule_distributions | sed "s/,/ /g;s/ /|/g")
     Distros_json=$(yq -cj '. | map(select(.name|test("'$Distros'")))' .molecule-platforms.yml)
+
+    # Make sure all distributions are supported
+    for Distro in `echo $Molecule_distributions | sed "s/,/ /g"`
+    do
+      name=$(yq -r '.[] | select(.name=="'$Distro'") | .name' .molecule-platforms.yml)
+      if [[ -z $name ]]
+      then
+        echo "#############################################################" >&2
+        echo "Distribution '$Distro' not found in '.molecule-platforms.yml'" >&2
+        echo "Please check .cicd.overwrite" >&2
+        echo "#############################################################" >&2
+        exit 1
+      fi
+    done
 
     # Show settings in verbose mode
     [[ $Verbose == true ]] && echo "$Distros_json" | jq .
@@ -453,7 +503,7 @@ function Patch_ansible29
   then
     echo "Patching for Rocky support"
     site=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
-    sed -i "s/'AlmaLinux'\],/'AlmaLinux', 'Rocky'\],/" $site/ansible/module_utils/facts/system/distribution.py
+    $Sudo sed -i "s/'AlmaLinux'\],/'AlmaLinux', 'Rocky'\],/" $site/ansible/module_utils/facts/system/distribution.py
 
     # echo "Downgrading 'community.general' to '3.8.3'"
     # ansible-galaxy collection install community.general:3.8.3 --force
@@ -489,11 +539,24 @@ Pre_dependency=false
 Verbose_level=0
 Log=true
 Colors=true
+Wait_after_error=${MOLECULE_WAIT_AFTER_ERROR:-0}
+Setup=true
+
+# Sudo command for non-root
+[[ `id -un` != root ]] && Sudo=sudo
 
 # parse command line into arguments and check results of parsing
-while getopts :c:Cde:DhkKLm:pPs:vxXZ: OPT
+while getopts :c:Cde:DhkKLm:pPs:SvWxXzZ:-: OPT
 do
-   case $OPT in
+
+  # Support long options
+  if [[ $OPT = "-" ]] ; then
+    OPT="${OPTARG%%=*}"       # extract long option name
+    OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
+    OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
+  fi
+
+  case $OPT in
      c) Role_path=$OPTARG
         ;;
      C) Colors=false
@@ -507,7 +570,8 @@ do
         ;;
      e) Vars_file="$OPTARG"
         ;;
-     h) Usage
+     h|help)
+        Usage
         exit 0
         ;;
      k) Destroy=never
@@ -524,13 +588,19 @@ do
         ;;
      s) Scenarios=`echo $OPTARG | sed "s/,/ /g"`
         ;;
+     S) Setup=false
+        ;;
      v) Verbose=true
         Verbose_level=$(($Verbose_level+1))
         Verbose1="$Verbose1 -v"
         ;;
+     W) Wait_after_error=900
+        ;;
      x) Fail_on_deprecation_warning=true
         ;;
      X) Fail_on_warning=true
+        ;;
+     z) Molecule_distributions="ubuntu2004,debian11,rockylinux8,fedora36"
         ;;
      Z) Molecule_distributions=$(echo $Molecule_distributions $OPTARG)
         ;;
@@ -545,12 +615,13 @@ do
 done
 shift $(($OPTIND -1))
 
+# Variable file
 if [[ -n $Vars_file ]]
 then
   [[ $Vars_file =~ ^/ ]] || Vars_file=${PWD}/${Vars_file}
   if [[ ! -f $Vars_file ]]
   then
-    echo "Variable file '$Vars_file' nout found!" >&2
+    echo "Variable file '$Vars_file' not found!" >&2
     exit 2
   fi
   export MOLECULE_ANSIBLE_ARGS="json:[\"--extra-vars=@${Vars_file}\"]"
@@ -558,6 +629,12 @@ fi
 
 # Molecule_distributions: fallback onto '$MOLECULE_DISTRO'
 Molecule_distributions=${Molecule_distributions:-${MOLECULE_DISTRO}}
+
+# Ensure all required packages & collections are installed
+[[ $Setup == true ]] && Setup
+
+# For Ansible 2.9 we will need to patch in order to support RockyLinux
+Patch_ansible29
 
 # destro, create and test without destroy
 if [[ $Destroy_and_setup == true ]]
@@ -567,11 +644,6 @@ then
   ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -L -k -Z "${Molecule_distributions}" $Verbose1 || exit $?
   exit 0
 fi
-
-# Ensure all required packages are installed
-Setup
-Molecule2
-Patch_ansible29
 
 # Test for all needed executables
 Executable_test ansible
@@ -596,7 +668,7 @@ molecule --version
 if [[ -d roles ]]
 then
   # Clean all present roles not directlry part of this repository
-  ansible-requirements-clean.sh -F -v
+  ansible-requirements-clean.sh -F -v -q
   Nested_roles=true
   Roles=`ls roles | grep -v requirements.yml`
 elif [[ ( ! -d tasks && ! -d library ) || -d group_vars || -d playbooks ]]
@@ -619,6 +691,9 @@ do
 
   # Jump to role directory when included in playbook repo
   [[ $Nested_roles == true ]] && cd roles/$Role
+
+  # Make sure molecule configuration is >= v3
+  Molecule2
 
   # Fix requirement.yml (git/pubkey --> https/token)
   Fix_requirements_role
