@@ -3,6 +3,8 @@
 - name: Converge
   hosts: all
   become: "yes"
+  vars:
+    molecule_python_install: True
   tasks:
     - name: Include role 'ansible-role-molecule'
       ansible.builtin.include_role:

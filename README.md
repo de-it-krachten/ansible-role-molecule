@@ -39,6 +39,12 @@ Note:
 ## Role Variables
 ### defaults/main.yml
 <pre><code>
+# Should python be installed by this role
+molecule_python_install: false
+
+# Should molecule virtual environments be created by this role
+molecule_python_venv: true
+
 # base directory for all virtual environments
 molecule_venv_root: /usr/local/venv
 
@@ -196,6 +202,8 @@ molecule_ansible7_state: skip
 - name: sample playbook for role 'molecule'
   hosts: all
   become: "yes"
+  vars:
+    molecule_python_install: True
   tasks:
     - name: Include role 'molecule'
       ansible.builtin.include_role:

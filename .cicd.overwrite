@@ -30,3 +30,6 @@ molecule:
     roles_extra:
       - package
       - python
+  converge:
+    vars:
+      molecule_python_install: true
