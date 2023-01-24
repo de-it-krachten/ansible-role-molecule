@@ -186,6 +186,8 @@ id -un
 yq --version
 yq --help
 which yq
+which python3
+set | grep -i python
 find / -name yq -ls 2>/dev/null
 exit 1
 
