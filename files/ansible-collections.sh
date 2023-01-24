@@ -181,7 +181,12 @@ then
   exit 0
 fi
 
+set -vx
+id -un
 yq --version
+yq --help
+which yq
+find / -name yq 2>/dev/null
 exit 1
 
 # Merge al collections into one
