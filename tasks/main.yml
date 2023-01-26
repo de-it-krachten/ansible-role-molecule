@@ -5,7 +5,7 @@
 
 - name: Install python3
   ansible.builtin.include_role:
-    name: python
+    name: deitkrachten.python
   vars:
     python2: false
     python3: true
@@ -35,7 +35,7 @@
 
 - name: Install ansible/molecule into virtual environments
   ansible.builtin.include_role:
-    name: python
+    name: deitkrachten.python
   vars:
     python_virtualenv_root: "{{ molecule_venv_root }}"
     python_virtualenvs: "{{ molecule_venvs }}"
