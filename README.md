@@ -30,8 +30,8 @@ Supported platforms
 - Debian 11 (Bullseye)
 - Ubuntu 20.04 LTS
 - Ubuntu 22.04 LTS
-- Fedora 35
 - Fedora 36
+- Fedora 37
 
 Note:
 <sup>1</sup> : no automated testing is performed on these platforms
