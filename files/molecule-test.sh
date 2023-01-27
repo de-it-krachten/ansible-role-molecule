@@ -493,6 +493,7 @@ function Render_molecule_yaml
     cd molecule/$Scenario
     rm -f molecule.yml
     e2j2 -f molecule.yml.j2 || exit 1
+    sed -i "/^$/d" molecule.yml
 
     # Quick fix for nested jinja host_vars
     sed -i -r "s/(hostvars\[.*)/\"{{ \\1 }}\"/" molecule.yml
@@ -668,7 +669,7 @@ then
 fi
 
 # Show molecule/ansible versions
-Showinfo
+[[ $Verbose == true ]] && Showinfo
 
 # Switch to the role path if specified
 [[ -n ${Role_path} ]] && cd ${Role_path}
