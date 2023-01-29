@@ -18,6 +18,7 @@ molecule-test.sh
 
 for script in $scripts
 do
+  echo "Downloading & installing '$script'"
   curl -s -o /tmp/${script} ${source_dir}/${script}
   $Sudo cp /tmp/${script} ${bin_dir}/${script}
   $Sudo chmod 755 ${bin_dir}/${script}
