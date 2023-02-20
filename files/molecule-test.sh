@@ -578,7 +578,7 @@ Log=true
 Colors=true
 Wait_after_error=${MOLECULE_WAIT_AFTER_ERROR:-0}
 Setup=true
-Driver=docker
+Driver=${MOLECULE_DRIVER:-docker}
 
 # Sudo command for non-root
 [[ `id -un` != root ]] && Sudo=sudo
