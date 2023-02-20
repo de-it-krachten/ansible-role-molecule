@@ -503,11 +503,18 @@ function Render_molecule_yaml
       name=$(yq -r '.[] | select(.name=="'$Distro'") | .name' $Molecule_platforms_file)
       if [[ -z $name ]]
       then
-        echo "#############################################################" >&2
-        echo "Distribution '$Distro' not found in '$Molecule_platforms_file'" >&2
-        echo "Please check .cicd.overwrite" >&2
-        echo "#############################################################" >&2
-        exit 1
+        if [[ $Allow_platforms_not_found == true ]]
+        then
+          echo "Distribution '$Distro' not found in '$Molecule_platforms_file'"
+          echo "Exiting w/out failure as requested"
+          exit 0
+        else
+          echo "#############################################################" >&2
+          echo "Distribution '$Distro' not found in '$Molecule_platforms_file'" >&2
+          echo "Please check .cicd.overwrite" >&2
+          echo "#############################################################" >&2
+          exit 1
+        fi
       fi
     done
 
@@ -579,12 +586,13 @@ Colors=true
 Wait_after_error=${MOLECULE_WAIT_AFTER_ERROR:-0}
 Setup=true
 Driver=${MOLECULE_DRIVER:-docker}
+Allow_platforms_not_found=false
 
 # Sudo command for non-root
 [[ `id -un` != root ]] && Sudo=sudo
 
 # parse command line into arguments and check results of parsing
-while getopts :c:Cde:DhkKLm:pPr:s:SvWxXzZ:-: OPT
+while getopts :Ac:Cde:DhkKLm:pPr:s:SvWxXzZ:-: OPT
 do
 
   # Support long options
@@ -595,6 +603,8 @@ do
   fi
 
   case $OPT in
+     A) Allow_platforms_not_found=true
+        ;;
      c) Role_path=$OPTARG
         ;;
      C) Colors=false
