@@ -462,23 +462,49 @@ function Render_molecule_yaml
   # export Scenario
   export Scenario
 
+  Molecule_file=molecule/${Scenario}/molecule.yml.j2
+  if [[ -f molecule/${Scenario}/molecule-${Driver}.yml.j2 ]]
+  then
+    Molecule_file=molecule/${Scenario}/molecule-${Driver}.yml.j2
+    echo "Using '$Molecule_file'"
+    cp ${Molecule_file} molecule/${Scenario}/molecule.yml.j2
+  fi
+
+  Molecule_platforms_file=.molecule-platforms.yml
+  if [[ -f molecule/${Scenario}/.molecule-platforms-${Driver}.yml ]]
+  then
+    Molecule_platforms_file=molecule/${Scenario}/.molecule-platforms-${Driver}.yml
+    echo "Using '$Molecule_platforms_file'"
+    cp $Molecule_platforms_file .molecule-platforms.yml
+  fi
+
+  printf "%80s\n" | tr ' ' '@' 
+  echo "scenario               = ${Scenario}"
+  echo "driver                 = ${Driver}"
+  echo "molecule file          = $Molecule_file"
+  echo "molecule platform file = $Molecule_platforms_file"
+  printf "%80s\n" | tr ' ' '@' 
+
   # Create molecule.yml from template
-  if [[ -f molecule/$Scenario/molecule.yml.j2 ]]
+  if [[ -f $Molecule_file ]]
   then
 
     # Create JSON with all distributions we want 
-    [[ $Molecule_distributions == ALL ]] && Molecule_distributions=$(echo $(yq -r '.[].name' .molecule-platforms.yml))
+    [[ $Molecule_distributions == ALL ]] && Molecule_distributions=$(echo $(yq -r '.[] | select(.ci==true) | .name' $Molecule_platforms_file))
     Distros=$(echo $Molecule_distributions | sed "s/,/ /g;s/ /|/g")
-    Distros_json=$(yq -cj '. | map(select(.name|test("'$Distros'")))' .molecule-platforms.yml)
+    Distros_json=$(yq -cj '. | map(select(.name|test("'$Distros'")))' $Molecule_platforms_file)
+
+    echo "Molecule distribution used for testing:"
+    echo "$Distros" | tr '|' '\n'
 
     # Make sure all distributions are supported
     for Distro in `echo $Molecule_distributions | sed "s/,/ /g"`
     do
-      name=$(yq -r '.[] | select(.name=="'$Distro'") | .name' .molecule-platforms.yml)
+      name=$(yq -r '.[] | select(.name=="'$Distro'") | .name' $Molecule_platforms_file)
       if [[ -z $name ]]
       then
         echo "#############################################################" >&2
-        echo "Distribution '$Distro' not found in '.molecule-platforms.yml'" >&2
+        echo "Distribution '$Distro' not found in '$Molecule_platforms_file'" >&2
         echo "Please check .cicd.overwrite" >&2
         echo "#############################################################" >&2
         exit 1
@@ -552,12 +578,13 @@ Log=true
 Colors=true
 Wait_after_error=${MOLECULE_WAIT_AFTER_ERROR:-0}
 Setup=true
+Driver=docker
 
 # Sudo command for non-root
 [[ `id -un` != root ]] && Sudo=sudo
 
 # parse command line into arguments and check results of parsing
-while getopts :c:Cde:DhkKLm:pPs:SvWxXzZ:-: OPT
+while getopts :c:Cde:DhkKLm:pPr:s:SvWxXzZ:-: OPT
 do
 
   # Support long options
@@ -596,6 +623,8 @@ do
      p) Pre_dependency=true
         ;;
      P) Pre_dependency=false
+        ;;
+     r) Driver=$OPTARG
         ;;
      s) Scenarios=`echo $OPTARG | sed "s/,/ /g"`
         ;;
@@ -650,9 +679,9 @@ Patch_ansible29
 # destro, create and test without destroy
 if [[ $Destroy_and_setup == true ]]
 then
-  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -L -m destroy -Z "${Molecule_distributions}" $Verbose1
-  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -L -m create -Z "${Molecule_distributions}" $Verbose1 || exit $?
-  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -L -k -Z "${Molecule_distributions}" $Verbose1 || exit $?
+  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -m destroy -Z "${Molecule_distributions}" $Verbose1
+  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -m create -Z "${Molecule_distributions}" $Verbose1 || exit $?
+  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -k -Z "${Molecule_distributions}" $Verbose1 || exit $?
   exit 0
 fi
 
