@@ -492,7 +492,7 @@ function Render_molecule_yaml
     # Create JSON with all distributions we want 
     [[ $Molecule_distributions == ALL ]] && Molecule_distributions=$(echo $(yq -r '.[] | select(.ci==true) | .name' $Molecule_platforms_file))
     Distros=$(echo $Molecule_distributions | sed "s/,/ /g;s/ /|/g")
-    Distros_json=$(yq -cj '. | map(select(.name|test("'$Distros'")))' $Molecule_platforms_file)
+    Distros_json=$(yq -cj '. | map(select(.name|test("^('$Distros')$")))' $Molecule_platforms_file)
 
     echo "Molecule distribution used for testing:"
     echo "$Distros" | tr '|' '\n'

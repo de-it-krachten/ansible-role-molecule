@@ -1894,3 +1894,44 @@ function Template
   fi
 
 }
+
+function Send_alert
+{
+
+  local OPTIND
+  local Title
+  local Message
+  local Priority=INFO
+  local Priority1=0
+    
+  while getopts :em:t:w OPT
+  do
+    case $OPT in
+      e) Priority=ERROR
+         Priority1=2
+         ;;
+      m) Message="$OPTARG"
+         ;;
+      t) Title="$OPTARG"
+         ;;
+      w) Priority=WARNING
+         Priority1=1
+         ;;
+    esac
+
+    # Set flag to be use by Test_flag
+    eval ${OPT}flag=1
+  done
+
+  shift $(($OPTIND -1))
+
+  Title="$HOSTNAME | $Priority | $Title"
+
+  if [[ $Test == true ]]
+  then
+    echo ${DIRNAME}/pushover.sh -p "$Priority1" -t "$Title" -m "$Message"
+  else
+    ${DIRNAME}/pushover.sh -p "$Priority1" -t "$Title" -m "$Message"
+ fi 
+
+}

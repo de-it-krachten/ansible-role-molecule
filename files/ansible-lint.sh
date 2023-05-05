@@ -148,6 +148,11 @@ function Overwrite_virtualenv
 
   fi
 
+  if [[ -n $VENV_PATH ]]
+  then
+    source ${VENV_PATH}/bin/activate
+  fi
+
 }
 
 function Check_version
@@ -394,7 +399,8 @@ function Printf
 function Wrapper
 {
 
-  VENV_ROOT=/data/venv
+  #VENV_ROOT=/data/venv
+  VENV_ROOT=~/.venv
 
   local Errors=0
 
@@ -403,10 +409,11 @@ function Wrapper
     echo "================================================================================"
     echo "Activating venv '$venv'"
     echo "================================================================================"
-    source $venv/bin/activate
+
+    export VENV_PATH=$venv
+    #source $venv/bin/activate
     Opts=$(echo $Opts | sed "s/-a//")
     ${DIRNAME}/ansible-lint.sh $Opts || Errors=$(($Errors+1))
-
   done
   return $Errors
 
