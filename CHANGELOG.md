@@ -1,3 +1,11 @@
+# [1.5.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.4.0...v1.5.0) (2023-05-06)
+
+
+### Features
+
+* Move to namespaced role names ([61c5b34](https://github.com/de-it-krachten/ansible-role-molecule/commit/61c5b3415aa35c3dd7c311cff3fb886563bc14b2))
+* Update molecule-test.sh to support multiple providers ([4a592a9](https://github.com/de-it-krachten/ansible-role-molecule/commit/4a592a9ecedff7dff9a8fe35c2c4994b28278d3c))
+
 # [1.4.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.3.0...v1.4.0) (2023-01-11)
 
 
