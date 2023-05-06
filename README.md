@@ -30,8 +30,8 @@ Supported platforms
 - Debian 11 (Bullseye)
 - Ubuntu 20.04 LTS
 - Ubuntu 22.04 LTS
-- Fedora 35
 - Fedora 36
+- Fedora 37
 
 Note:
 <sup>1</sup> : no automated testing is performed on these platforms
@@ -167,12 +167,6 @@ molecule_venvs:
       - requests
 </pre></code>
 
-### defaults/Ubuntu-20.yml
-<pre><code>
-# Ansible version not supported
-molecule_ansible7_state: skip
-</pre></code>
-
 ### defaults/family-RedHat-8.yml
 <pre><code>
 # Install python 3.8 / 3.9
@@ -190,6 +184,12 @@ molecule_ansible7_python: /usr/bin/python3.9
 # Ansible version not supported
 molecule_ansible5_state: skip
 molecule_ansible6_state: skip
+molecule_ansible7_state: skip
+</pre></code>
+
+### defaults/Ubuntu-20.yml
+<pre><code>
+# Ansible version not supported
 molecule_ansible7_state: skip
 </pre></code>
 

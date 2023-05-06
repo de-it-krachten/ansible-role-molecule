@@ -101,6 +101,40 @@ EOF
 
 }
 
+function Clean_role
+{
+
+  if [[ -e roles/$Role ]]
+  then
+    if [[ -L roles/$Role ]]
+    then
+      [[ $Verbose_level -gt 0 ]] && echo "Leaving symbolic link 'roles/$Role'" >&2
+      return 0
+    elif [[ -d roles/$Role/.git ]]
+    then
+      if [[ $Force == true ]]
+      then
+        $Echo rm -fr roles/$Role
+      else
+        [[ $Verbose_level -gt 0 ]] && echo "Leaving repository 'roles/$Role' due to presence of .git directory" >&2
+      fi
+    elif [[ -d roles/$Role ]]
+    then
+      [[ $Verbose_level -gt 0 ]] && echo "Removing 'role/$Role'" >&2
+      $Echo rm -fr roles/$Role
+    fi
+  else
+    [[ $Verbose_level -gt 0 ]] && echo "Role '$Role' not found"
+  fi
+
+  # Update .gitignore to exclude external roles
+  [[ $Dry_run == false && $Gitignore == true ]] && Gitignore
+
+  # Update .ansible-lint to exclude external roles
+  [[ $Dry_run == false && $Ansible_lint == true ]] && Ansible_lint
+
+}
+
 
 ##############################################################
 #
@@ -199,37 +233,16 @@ Roles=$(Yamlloop)
 # Loop over each role
 for Role in $Roles
 do
-
-  if [[ -e roles/$Role ]]
-  then
-    if [[ -L roles/$Role ]]
-    then
-      [[ $Verbose_level -gt 0 ]] && echo "Leaving symbolic link 'roles/$Role'" >&2
-      continue
-    elif [[ -d roles/$Role/.git ]]
-    then
-      if [[ $Force == true ]]
-      then
-        $Echo rm -fr roles/$Role
-      else
-        [[ $Verbose_level -gt 0 ]] && echo "Leaving repository 'roles/$Role' due to presence of .git directory" >&2
-      fi
-    elif [[ -d roles/$Role ]]
-    then
-      [[ $Verbose_level -gt 0 ]] && echo "Removing 'role/$Role'" >&2
-      $Echo rm -fr roles/$Role
-    fi
-  else
-    [[ $Verbose_level -gt 0 ]] && echo "Role '$Role' not found"
-  fi
-
-  # Update .gitignore to exclude external roles
-  [[ $Dry_run == false && $Gitignore == true ]] && Gitignore
-
-  # Update .ansible-lint to exclude external roles
-  [[ $Dry_run == false && $Ansible_lint == true ]] && Ansible_lint
-
+  Clean_role
 done
+
+# Delete other roles
+Roles=$(ls -d roles/deitkrachten.* 2>/dev/null | sed "s/roles\///")
+for Role in $Roles
+do
+  Clean_role
+done
+
 
 # Update .gitignore to exclude external roles
 #[[ $Dry_run == false && $Gitignore == true ]] && Gitignore

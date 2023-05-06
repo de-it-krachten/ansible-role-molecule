@@ -28,8 +28,8 @@ molecule:
       activate_epel: true
   requirements:
     roles_extra:
-      - package
-      - python
+      - deitkrachten.package
+      - deitkrachten.python
   converge:
     vars:
       molecule_python_install: true

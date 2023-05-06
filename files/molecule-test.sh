@@ -137,6 +137,27 @@ EOF
 
 }
 
+function Showinfo
+{
+
+  echo -e "\n\e[35mansible version:\e[0m"
+  ansible --version
+
+  echo -e "\n\e[35mansible-lint version:\e[0m"
+  ansible-lint --version
+
+  echo -e "\n\e[35mmolecule version:\e[0m"
+  molecule --version
+
+  echo -e "\n\e[35mpython modules:\e[0m"
+  pip3 list
+
+  echo -e "\n\e[35mansible collections:\e[0m"
+  ansible-galaxy collection list
+  echo
+
+}
+
 function Setup
 {
 
@@ -151,19 +172,8 @@ function Setup
   rm -fr /tmp/roles
   ansible-galaxy install -r molecule/default/requirements.yml -p /tmp/roles || exit 1
 
-  # Create combined list of collections we need
-  echo -e "---\ncollections:" > ${TMPFILE}
-  echo "community.docker" > ${TMPFILE}1
-  Collections=`ls -d .collections /tmp/roles/*/.collections 2>/dev/null`
-  [[ -n $Collections ]] && yq -y . $Collections | grep "^  - " | sed "s/^  - //" | grep -vE "^(ansible\.builtin)$" >> ${TMPFILE}1
-  sort -u ${TMPFILE}1 | sed "s/^/  - /" >> ${TMPFILE}
-
-  # Show collections file
-  echo "The following collections will be installed :"
-  sort -u ${TMPFILE}1 | sed "s/^/- /"
-
-  # Install all collections
-  ansible-galaxy collection install -r ${TMPFILE} || exit 1
+  # Get all collections needed by molecule
+  ansible-collections.sh -r /tmp/roles || exit 1
 
   # Make this step not run a second time
   export Setup_executed=true
@@ -452,26 +462,59 @@ function Render_molecule_yaml
   # export Scenario
   export Scenario
 
+  Molecule_file=molecule/${Scenario}/molecule.yml.j2
+  if [[ -f molecule/${Scenario}/molecule-${Driver}.yml.j2 ]]
+  then
+    Molecule_file=molecule/${Scenario}/molecule-${Driver}.yml.j2
+    echo "Using '$Molecule_file'"
+    cp ${Molecule_file} molecule/${Scenario}/molecule.yml.j2
+  fi
+
+  Molecule_platforms_file=.molecule-platforms.yml
+  if [[ -f molecule/${Scenario}/.molecule-platforms-${Driver}.yml ]]
+  then
+    Molecule_platforms_file=molecule/${Scenario}/.molecule-platforms-${Driver}.yml
+    echo "Using '$Molecule_platforms_file'"
+    cp $Molecule_platforms_file .molecule-platforms.yml
+  fi
+
+  printf "%80s\n" | tr ' ' '@' 
+  echo "scenario               = ${Scenario}"
+  echo "driver                 = ${Driver}"
+  echo "molecule file          = $Molecule_file"
+  echo "molecule platform file = $Molecule_platforms_file"
+  printf "%80s\n" | tr ' ' '@' 
+
   # Create molecule.yml from template
-  if [[ -f molecule/$Scenario/molecule.yml.j2 ]]
+  if [[ -f $Molecule_file ]]
   then
 
     # Create JSON with all distributions we want 
-    [[ $Molecule_distributions == ALL ]] && Molecule_distributions=$(echo $(yq -r '.[].name' .molecule-platforms.yml))
+    [[ $Molecule_distributions == ALL ]] && Molecule_distributions=$(echo $(yq -r '.[] | select(.ci==true) | .name' $Molecule_platforms_file))
     Distros=$(echo $Molecule_distributions | sed "s/,/ /g;s/ /|/g")
-    Distros_json=$(yq -cj '. | map(select(.name|test("'$Distros'")))' .molecule-platforms.yml)
+    Distros_json=$(yq -cj '. | map(select(.name|test("^('$Distros')$")))' $Molecule_platforms_file)
+
+    echo "Molecule distribution used for testing:"
+    echo "$Distros" | tr '|' '\n'
 
     # Make sure all distributions are supported
     for Distro in `echo $Molecule_distributions | sed "s/,/ /g"`
     do
-      name=$(yq -r '.[] | select(.name=="'$Distro'") | .name' .molecule-platforms.yml)
+      name=$(yq -r '.[] | select(.name=="'$Distro'") | .name' $Molecule_platforms_file)
       if [[ -z $name ]]
       then
-        echo "#############################################################" >&2
-        echo "Distribution '$Distro' not found in '.molecule-platforms.yml'" >&2
-        echo "Please check .cicd.overwrite" >&2
-        echo "#############################################################" >&2
-        exit 1
+        if [[ $Allow_platforms_not_found == true ]]
+        then
+          echo "Distribution '$Distro' not found in '$Molecule_platforms_file'"
+          echo "Exiting w/out failure as requested"
+          exit 0
+        else
+          echo "#############################################################" >&2
+          echo "Distribution '$Distro' not found in '$Molecule_platforms_file'" >&2
+          echo "Please check .cicd.overwrite" >&2
+          echo "#############################################################" >&2
+          exit 1
+        fi
       fi
     done
 
@@ -483,6 +526,7 @@ function Render_molecule_yaml
     cd molecule/$Scenario
     rm -f molecule.yml
     e2j2 -f molecule.yml.j2 || exit 1
+    sed -i "/^$/d" molecule.yml
 
     # Quick fix for nested jinja host_vars
     sed -i -r "s/(hostvars\[.*)/\"{{ \\1 }}\"/" molecule.yml
@@ -541,12 +585,14 @@ Log=true
 Colors=true
 Wait_after_error=${MOLECULE_WAIT_AFTER_ERROR:-0}
 Setup=true
+Driver=${MOLECULE_DRIVER:-docker}
+Allow_platforms_not_found=false
 
 # Sudo command for non-root
 [[ `id -un` != root ]] && Sudo=sudo
 
 # parse command line into arguments and check results of parsing
-while getopts :c:Cde:DhkKLm:pPs:SvWxXzZ:-: OPT
+while getopts :Ac:Cde:DhkKLm:pPr:s:SvWxXzZ:-: OPT
 do
 
   # Support long options
@@ -557,6 +603,8 @@ do
   fi
 
   case $OPT in
+     A) Allow_platforms_not_found=true
+        ;;
      c) Role_path=$OPTARG
         ;;
      C) Colors=false
@@ -585,6 +633,8 @@ do
      p) Pre_dependency=true
         ;;
      P) Pre_dependency=false
+        ;;
+     r) Driver=$OPTARG
         ;;
      s) Scenarios=`echo $OPTARG | sed "s/,/ /g"`
         ;;
@@ -639,9 +689,9 @@ Patch_ansible29
 # destro, create and test without destroy
 if [[ $Destroy_and_setup == true ]]
 then
-  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -L -m destroy -Z "${Molecule_distributions}" $Verbose1
-  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -L -m create -Z "${Molecule_distributions}" $Verbose1 || exit $?
-  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -L -k -Z "${Molecule_distributions}" $Verbose1 || exit $?
+  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -m destroy -Z "${Molecule_distributions}" $Verbose1
+  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -m create -Z "${Molecule_distributions}" $Verbose1 || exit $?
+  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -k -Z "${Molecule_distributions}" $Verbose1 || exit $?
   exit 0
 fi
 
@@ -657,9 +707,8 @@ then
   exec >&${tee[1]} 2>&1
 fi
 
-# Show molecule version
-echo "molecule version :"
-molecule --version
+# Show molecule/ansible versions
+[[ $Verbose == true ]] && Showinfo
 
 # Switch to the role path if specified
 [[ -n ${Role_path} ]] && cd ${Role_path}
