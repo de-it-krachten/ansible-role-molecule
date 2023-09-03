@@ -67,100 +67,46 @@ molecule_pip_packages:
   - yq
 
 # list of all virtual environments
-molecule_venvs:
-  - name: ansible29
-    state: "{{ molecule_ansible29_state | default('present') }}"
-    recreate: false
-    python: /usr/bin/python3
-    site_packages: false
-    packages:
-      - ansible==2.9.27
-      - ansible-lint==5.4.0
-      - molecule[ansible]
-      - molecule[lint]
-      - molecule-docker
-      - molecule-vagrant
-      - python-vagrant
-      - docker
-      - docker-compose
-      - lxml
-      - dnspython
-      - jmespath
-      - netaddr
-      - requests
-  - name: ansible4
-    state: "{{ molecule_ansible4_state | default('present') }}"
-    recreate: false
-    python: /usr/bin/python3
-    site_packages: false
-    packages:
-      - "ansible>=4,<5"
-      - ansible-lint==5.4.0
-      - molecule[ansible]
-      - molecule[lint]
-      - molecule-docker
-      - molecule-vagrant
-      - python-vagrant
-      - docker
-      - docker-compose
-      - lxml
-      - dnspython
-      - jmespath
-      - netaddr
-      - requests
-  - name: ansible5
-    state: "{{ molecule_ansible5_state | default('present') }}"
-    recreate: false
-    python: "{{ molecule_ansible5_python | default('/usr/bin/python3') }}"
-    site_packages: false
-    packages:
-      - "ansible>=5,<6"
-      - ansible-lint==5.4.0
-      - molecule[ansible]
-      - molecule[lint]
-      - molecule-docker
-      - molecule-vagrant
-      - python-vagrant
-      - docker
-      - docker-compose
-      - lxml
-      - dnspython
-      - jmespath
-      - netaddr
-      - requests
-  - name: ansible6
-    state: "{{ molecule_ansible6_state | default('present') }}"
-    recreate: false
-    python: "{{ molecule_ansible6_python | default('/usr/bin/python3') }}"
-    site_packages: false
-    packages:
-      - "ansible>=6,<7"
-      - ansible-lint
-      - molecule[ansible]
-      - molecule[lint]
-      - molecule-docker
-      - molecule-vagrant
-      - python-vagrant
-      - docker
-      - docker-compose
-      - lxml
-      - dnspython
-      - jmespath
-      - netaddr
-      - requests
+molecule_venvs_empty:
   - name: ansible7
     state: "{{ molecule_ansible7_state | default('present') }}"
     recreate: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
     python: "{{ molecule_ansible7_python | default('/usr/bin/python3') }}"
     site_packages: false
+    packages: []
+  - name: ansible8
+    state: "{{ molecule_ansible8_state | default('present') }}"
+    recreate: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
+    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+    site_packages: false
+    packages: []
+  - name: molecule
+    state: "{{ molecule_ansible7_state | default('present') }}"
+    recreate: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
+    python: "{{ molecule_ansible7_python | default('/usr/bin/python3') }}"
+    site_packages: false
+    packages: []
+  - name: ansible-lint
+    state: "{{ molecule_ansible8_state | default('present') }}"
+    recreate: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
+    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+    site_packages: false
+    packages: []
+
+
+# list of all virtual environments
+molecule_venvs:
+  - name: ansible7
+    state: "{{ molecule_ansible7_state | default('present') }}"
+    python: "{{ molecule_ansible7_python | default('/usr/bin/python3') }}"
+    site_packages: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
     packages:
       - "ansible>=7,<8"
-      - ansible-lint
-      - molecule[ansible]
-      - molecule[lint]
-      - molecule-docker
-      - molecule-vagrant
-      - python-vagrant
       - docker
       - docker-compose
       - lxml
@@ -168,6 +114,38 @@ molecule_venvs:
       - jmespath
       - netaddr
       - requests
+  - name: ansible8
+    state: "{{ molecule_ansible8_state | default('present') }}"
+    recreate: false
+    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+    site_packages: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
+    packages:
+      - "ansible>=8,<9"
+      - docker
+      - docker-compose
+      - lxml
+      - dnspython
+      - jmespath
+      - netaddr
+      - requests
+  - name: ansible-lint
+    state: "{{ molecule_ansible8_state | default('present') }}"
+    recreate: false
+    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+    site_packages: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
+    packages:
+      - ansible-lint
+  - name: molecule
+    state: "{{ molecule_ansible8_state | default('present') }}"
+    recreate: false
+    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+    site_packages: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
+    packages:
+      - "molecule<5"
+      - molecule-docker
 </pre></code>
 
 ### defaults/family-RedHat-8.yml
@@ -177,9 +155,8 @@ molecule_python38: true
 molecule_python39: true
 
 # Python executable to use
-molecule_ansible5_python: /usr/bin/python3.8
-molecule_ansible6_python: /usr/bin/python3.8
-molecule_ansible7_python: /usr/bin/python3.9
+molecule_ansible7_python: /usr/bin/python3.11
+molecule_ansible8_python: /usr/bin/python3.11
 </pre></code>
 
 ### defaults/family-RedHat-7.yml
@@ -207,6 +184,9 @@ molecule_ansible7_state: skip
   become: "yes"
   vars:
     molecule_python_install: True
+    python38: False
+    python39: False
+    python311: True
   tasks:
     - name: Include role 'molecule'
       ansible.builtin.include_role:

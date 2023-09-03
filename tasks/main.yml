@@ -3,7 +3,7 @@
 - name: Load variables based on OS type
   ansible.builtin.include_tasks: vars.yml
 
-- name: Install python3
+- name: Install python3  # noqa var-naming[no-role-prefix]
   ansible.builtin.include_role:
     name: deitkrachten.python
   vars:
@@ -11,6 +11,7 @@
     python3: true
     python38: "{{ molecule_python38 }}"
     python39: "{{ molecule_python39 }}"
+    python311: "{{ molecule_python311 }}"
   when: molecule_python_install | bool
 
 - name: Uninstall python3 packages
@@ -28,12 +29,50 @@
 
 - name: Install pip packages globally
   ansible.builtin.pip:
+    name: wheel
+    state: present
+  become: yes
+  tags: molecule-idempotence-notest
+
+- name: Install pip packages globally
+  ansible.builtin.pip:
     name: "{{ molecule_pip_packages }}"
     state: present
   become: yes
   tags: molecule-idempotence-notest
 
-- name: Install ansible/molecule into virtual environments
+- name: Setup virtual enviromments
+  ansible.builtin.include_role:
+    name: deitkrachten.python
+  vars:
+    python_virtualenv_root: "{{ molecule_venv_root }}"
+    python_virtualenvs: "{{ molecule_venvs_empty }}"
+  when: molecule_python_venv | bool
+  tags: molecule-idempotence-notest
+
+- name: Install latest version of wheel/setuptools
+  ansible.builtin.pip:
+    name:
+      - wheel
+      - setuptools
+    executable: "{{ molecule_venv_root }}/{{ item.name }}/bin/pip3"
+    extra_args: "--upgrade"
+  become: yes
+  become_user: "{{ molecule_virtualenv_user | default('root') }}"
+  loop: "{{ molecule_venvs_empty }}"
+
+- name: Work-around for pyyaml
+  ansible.builtin.pip:
+    name:
+      - "cython<3.0.0"
+      - "pyyaml<6"
+    executable: "{{ molecule_venv_root }}/{{ item.name }}/bin/pip3"
+    extra_args: "--no-build-isolation"
+  become: yes
+  become_user: "{{ molecule_virtualenv_user | default('root') }}"
+  loop: "{{ molecule_venvs_empty }}"
+
+- name: Install ansible/molecule into virtual environments  # noqa var-naming[no-role-prefix]
   ansible.builtin.include_role:
     name: deitkrachten.python
   vars:
@@ -47,6 +86,7 @@
     src: "{{ item }}"
     dest: /usr/local/bin/{{ item }}
     mode: "0755"
+  become: yes
   loop:
     - ansible-collections.sh
     - ansible-fix.sh

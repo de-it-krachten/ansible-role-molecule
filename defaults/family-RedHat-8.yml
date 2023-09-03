@@ -5,6 +5,5 @@ molecule_python38: true
 molecule_python39: true
 
 # Python executable to use
-molecule_ansible5_python: /usr/bin/python3.8
-molecule_ansible6_python: /usr/bin/python3.8
-molecule_ansible7_python: /usr/bin/python3.9
+molecule_ansible7_python: /usr/bin/python3.11
+molecule_ansible8_python: /usr/bin/python3.11

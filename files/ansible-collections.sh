@@ -184,7 +184,7 @@ fi
 # Merge al collections into one
 for Collection in $Collections
 do
-  yq -y .collections $Collection | egrep -v "\[\]|ansible.builtin" | sed "s/.*- //"
+  yq -y .collections $Collection | grep -vE "\[\]|ansible.builtin" | sed "s/.*- //"
 done | sort -u > ${TMPFILE}collections
 
 echo "collections:" > ${TMPFILE}

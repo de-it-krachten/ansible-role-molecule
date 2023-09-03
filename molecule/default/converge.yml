@@ -5,6 +5,9 @@
   become: "yes"
   vars:
     molecule_python_install: True
+    python38: False
+    python39: False
+    python311: True
   tasks:
     - name: Include role 'ansible-role-molecule'
       ansible.builtin.include_role:

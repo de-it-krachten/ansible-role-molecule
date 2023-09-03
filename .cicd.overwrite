@@ -33,3 +33,6 @@ molecule:
   converge:
     vars:
       molecule_python_install: true
+      python38: false
+      python39: false
+      python311: true

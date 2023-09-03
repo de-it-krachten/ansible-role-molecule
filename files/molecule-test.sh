@@ -113,6 +113,7 @@ Flags :
    -p          : Execute dependency phase before test (default)
                  Useful when depending on custom tasks from other roles (e.g. lint)
    -P          : Do NOT run the dependency phase before test
+   -r <driver> : Molecule driver to use (default=docker)
    -s <names>  : Scenario(s) to execute (divided by comma's)
    -W          : Wait for 900 seconds after failure
    -x          : Fail if deprecation warning is found
