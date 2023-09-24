@@ -104,3 +104,4 @@ molecule_venvs:
     packages:
       - "molecule<5"
       - molecule-docker
+      - "ansible-compat<4"

@@ -96,3 +96,30 @@
     - functions_ansible.sh
     - functions.sh
     - molecule-test.sh
+    - venv-wrapper.sh
+
+- name: Setup symlinks
+  ansible.builtin.file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    state: link
+    force: true
+  loop:
+    - src: /usr/local/bin/venv-wrapper.sh
+      dest: /usr/local/bin/ansible
+    - src: /usr/local/bin/venv-wrapper.sh
+      dest: /usr/local/bin/ansible7
+    - src: /usr/local/bin/venv-wrapper.sh
+      dest: /usr/local/bin/ansible8
+    - src: /usr/local/bin/venv-wrapper.sh
+      dest: /usr/local/bin/molecule
+    - src: /usr/local/bin/venv-wrapper.sh
+      dest: /usr/local/bin/ansible-playbook
+    - src: /usr/local/bin/venv-wrapper.sh
+      dest: /usr/local/bin/ansible-galaxy
+    - src: /usr/local/bin/venv-wrapper.sh
+      dest: /usr/local/bin/ansible-lint
+    - src: /usr/local/bin/venv-wrapper.sh
+      dest: /usr/local/bin/yamllint

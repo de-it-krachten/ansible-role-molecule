@@ -146,13 +146,15 @@ molecule_venvs:
     packages:
       - "molecule<5"
       - molecule-docker
+      - "ansible-compat<4"
 </pre></code>
 
 ### defaults/family-RedHat-8.yml
 <pre><code>
-# Install python 3.8 / 3.9
-molecule_python38: true
-molecule_python39: true
+# Install python 3.8 / 3.9 / 3.11
+molecule_python38: false
+molecule_python39: false
+molecule_python311: true
 
 # Python executable to use
 molecule_ansible7_python: /usr/bin/python3.11
