@@ -105,3 +105,20 @@ molecule_venvs:
       - "molecule<5"
       - molecule-docker
       - "ansible-compat<4"
+  - name: e2j2
+    state: "{{ molecule_ansible8_state | default('present') }}"
+    recreate: false
+    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+    site_packages: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
+    packages:
+      - e2j2
+      - jinja2-ansible-filters
+  - name: yq
+    state: "{{ molecule_ansible8_state | default('present') }}"
+    recreate: false
+    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+    site_packages: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
+    packages:
+      - yq

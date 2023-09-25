@@ -362,60 +362,11 @@ jobs:
       - name: Install test dependencies.
         run: |
           sudo rm -f /usr/bin/yq
-
-          pip3 install e2j2 yq
-          pip3 install "${{ matrix.ansible }}" "${{ matrix.ansible_lint }}" "ansible-compat<4" "molecule<5" yamllint jmespath
-
-          echo "MOLECULE_DRIVER = $MOLECULE_DRIVER"
-          if [[ $MOLECULE_DRIVER == 'hetznercloud' ]] ; then
-            pip3 install molecule-hetznercloud
-            ansible-galaxy collection install hetzner.hcloud community.crypto
-            site=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
-            createyml_file=$site/molecule_hetznercloud/playbooks/create.yml
-            createyml_url=https://raw.githubusercontent.com/de-it-krachten/molecule-hetznercloud/sshkey/molecule_hetznercloud/playbooks/create.yml
-            sudo apt install curl
-            curl -s -o $createyml_file $createyml_url
-          elif [[ $MOLECULE_DRIVER == 'vagrant' ]] ; then
-            pip3 install molecule[vagrant]
-          elif [[ $MOLECULE_DRIVER == 'podman' ]] ; then
-            pip3 install molecule[podman]
-          else
-            pip3 install molecule[docker]
-          fi
-
-          pip3 install "requests<2.29" "urllib3<2"
-
-        env:
-          MOLECULE_DRIVER: ${{ vars.MOLECULE_DRIVER }}
-
-      - name: Retrieve & install wrapper scripts
-        run: |
-          set -e
-          sudo apt install curl
-          curl -s -o /tmp/install.sh \
-            https://raw.githubusercontent.com/de-it-krachten/ansible-role-molecule/dev/files/install.sh
-          bash /tmp/install.sh
-
-      - name: Install required galaxy collections
-        run: |
-          /usr/local/bin/ansible-collections.sh
-
-      - name: For ansible 2.9, we need to perform some tweaking
-        run: |
-          ansible=$(pip show ansible 2>/dev/null | awk '/Version:/ {print $2}')
-          ansible_core=$(pip show ansible-core 2>/dev/null | awk '/Version:/ {print $2}')
-          ansible=${ansible:-$ansible_core}
-          echo "Ansible version = $ansible"
-          if [[ $ansible =~ 2.9.* ]]
-          then
-            echo "Patching for Rocky support"
-            site=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
-            sed -i "s/'AlmaLinux'\],/'AlmaLinux', 'Rocky'\],/" $site/ansible/module_utils/facts/system/distribution.py
-            echo "Downgrading 'community.general' to '3.8.3'"
-            ansible-galaxy collection install community.general:3.8.3 --force
-          else
-            echo "No need to patch it"
-          fi
+          pip3 install ansible-core 
+          git clone -b dev https://github.com/de-it-krachten/ansible-playbooks-runner /tmp/ansible-playbooks-runner
+          cd /tmp/ansible-playbooks-runner
+          ansible-galaxy install -r roles/requirements.yml -p roles/
+          ansible-playbook runner.yml
 
       - name: Set-up github runner
         run: |
@@ -427,13 +378,3 @@ jobs:
           ansible-lint --version
           yamllint --version
           molecule --version
-
-      - name: Run Molecule tests.
-        run: molecule-test.sh -A
-        env:
-          PY_COLORS: '1'
-          ANSIBLE_FORCE_COLOR: '1'
-          MOLECULE_DISTRO: ${{ matrix.distro }}
-          MOLECULE_PLAYBOOK: ${{ matrix.playbook }}
-          HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
-          MOLECULE_DRIVER: ${{ vars.MOLECULE_DRIVER }}
