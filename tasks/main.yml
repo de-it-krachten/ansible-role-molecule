@@ -32,40 +32,41 @@
     name: deitkrachten.python
   vars:
     python_virtualenv_root: "{{ molecule_venv_root }}"
-    python_virtualenvs: "{{ molecule_venvs_empty }}"
-  when: molecule_python_venv | bool
-  tags: molecule-idempotence-notest
-
-- name: Install latest version of wheel/setuptools
-  ansible.builtin.pip:
-    name:
-      - wheel
-      - setuptools
-    executable: "{{ molecule_venv_root }}/{{ item.name }}/bin/pip3"
-    extra_args: "--upgrade"
-  become: yes
-  become_user: "{{ molecule_virtualenv_user | default('root') }}"
-  loop: "{{ molecule_venvs_empty }}"
-
-- name: Work-around for pyyaml
-  ansible.builtin.pip:
-    name:
-      - "cython<3.0.0"
-      - "pyyaml<6"
-    executable: "{{ molecule_venv_root }}/{{ item.name }}/bin/pip3"
-    extra_args: "--no-build-isolation"
-  become: yes
-  become_user: "{{ molecule_virtualenv_user | default('root') }}"
-  loop: "{{ molecule_venvs_empty }}"
-
-- name: Install ansible/molecule into virtual environments  # noqa var-naming[no-role-prefix]
-  ansible.builtin.include_role:
-    name: deitkrachten.python
-  vars:
-    python_virtualenv_root: "{{ molecule_venv_root }}"
+    # python_virtualenvs: "{{ molecule_venvs_empty }}"
     python_virtualenvs: "{{ molecule_venvs }}"
   when: molecule_python_venv | bool
   tags: molecule-idempotence-notest
+
+#- name: Install latest version of wheel/setuptools
+#  ansible.builtin.pip:
+#    name:
+#      - wheel
+#      - setuptools
+#    executable: "{{ molecule_venv_root }}/{{ item.name }}/bin/pip3"
+#    extra_args: "--upgrade"
+#  become: yes
+#  become_user: "{{ molecule_virtualenv_user | default('root') }}"
+#  loop: "{{ molecule_venvs_empty }}"
+#
+#- name: Work-around for pyyaml
+#  ansible.builtin.pip:
+#    name:
+#      - "cython<3.0.0"
+#      - "pyyaml<6"
+#    executable: "{{ molecule_venv_root }}/{{ item.name }}/bin/pip3"
+#    extra_args: "--no-build-isolation"
+#  become: yes
+#  become_user: "{{ molecule_virtualenv_user | default('root') }}"
+#  loop: "{{ molecule_venvs_empty }}"
+#
+#- name: Install ansible/molecule into virtual environments  # noqa var-naming[no-role-prefix]
+#  ansible.builtin.include_role:
+#    name: deitkrachten.python
+#  vars:
+#    python_virtualenv_root: "{{ molecule_venv_root }}"
+#    python_virtualenvs: "{{ molecule_venvs }}"
+#  when: molecule_python_venv | bool
+#  tags: molecule-idempotence-notest
 
 - name: Distribute all support scripts & files
   ansible.builtin.copy:
