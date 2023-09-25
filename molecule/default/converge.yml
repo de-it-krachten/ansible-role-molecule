@@ -8,6 +8,9 @@
     python38: False
     python39: False
     python311: True
+  roles:
+    - deitkrachten.python
+    - deitkrachten.docker
   tasks:
     - name: Include role 'ansible-role-molecule'
       ansible.builtin.include_role:

@@ -10,7 +10,8 @@ Install & manage molecule for testing Ansible roles
 ## Dependencies
 
 #### Roles
-None
+- deitkrachten.python
+- deitkrachten.docker
 
 #### Collections
 - community.general
@@ -147,6 +148,23 @@ molecule_venvs:
       - "molecule<5"
       - molecule-docker
       - "ansible-compat<4"
+  - name: e2j2
+    state: "{{ molecule_ansible8_state | default('present') }}"
+    recreate: false
+    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+    site_packages: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
+    packages:
+      - e2j2
+      - jinja2-ansible-filters
+  - name: yq
+    state: "{{ molecule_ansible8_state | default('present') }}"
+    recreate: false
+    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+    site_packages: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
+    packages:
+      - yq
 </pre></code>
 
 ### defaults/family-RedHat-8.yml
@@ -189,6 +207,9 @@ molecule_ansible7_state: skip
     python38: False
     python39: False
     python311: True
+  roles:
+    - deitkrachten.python
+    - deitkrachten.docker
   tasks:
     - name: Include role 'molecule'
       ansible.builtin.include_role:

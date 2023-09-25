@@ -394,7 +394,7 @@ platforms:
   debian10:
     name: Debian 10 (Buster)
     ci: false
-    supported: true
+    supported: false
     galaxy:
       name: Debian
       version: buster

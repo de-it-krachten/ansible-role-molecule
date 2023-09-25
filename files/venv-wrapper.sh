@@ -45,6 +45,16 @@ case $LINK in
     ansible-playbook "$@"
     exit $?
     ;;
+  yq)
+    source ${VENV_ROOT}/yq/bin/activate
+    yq "$@"
+     exit $?
+     ;;
+  e2j2)
+    source ${VENV_ROOT}/e2j2/bin/activate
+    e2j2 "$@"
+    exit $?
+    ;;
   *)
     echo "Unsupported link '${LINK}'" >&2
     exit 1

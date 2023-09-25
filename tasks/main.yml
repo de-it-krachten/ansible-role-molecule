@@ -3,17 +3,6 @@
 - name: Load variables based on OS type
   ansible.builtin.include_tasks: vars.yml
 
-- name: Install python3  # noqa var-naming[no-role-prefix]
-  ansible.builtin.include_role:
-    name: deitkrachten.python
-  vars:
-    python2: false
-    python3: true
-    python38: "{{ molecule_python38 }}"
-    python39: "{{ molecule_python39 }}"
-    python311: "{{ molecule_python311 }}"
-  when: molecule_python_install | bool
-
 - name: Uninstall python3 packages
   ansible.builtin.package:
     name: "{{ item }}"
@@ -26,20 +15,6 @@
     name: "{{ molecule_os_packages }}"
     state: present
   become: yes
-
-- name: Install pip packages globally
-  ansible.builtin.pip:
-    name: wheel
-    state: present
-  become: yes
-  tags: molecule-idempotence-notest
-
-- name: Install pip packages globally
-  ansible.builtin.pip:
-    name: "{{ molecule_pip_packages }}"
-    state: present
-  become: yes
-  tags: molecule-idempotence-notest
 
 - name: Setup virtual enviromments
   ansible.builtin.include_role:
@@ -100,26 +75,20 @@
 
 - name: Setup symlinks
   ansible.builtin.file:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
+    src: /usr/local/bin/venv-wrapper.sh
+    dest: "/usr/local/bin/{{ item }}"
     owner: root
     group: root
     state: link
     force: true
   loop:
-    - src: /usr/local/bin/venv-wrapper.sh
-      dest: /usr/local/bin/ansible
-    - src: /usr/local/bin/venv-wrapper.sh
-      dest: /usr/local/bin/ansible7
-    - src: /usr/local/bin/venv-wrapper.sh
-      dest: /usr/local/bin/ansible8
-    - src: /usr/local/bin/venv-wrapper.sh
-      dest: /usr/local/bin/molecule
-    - src: /usr/local/bin/venv-wrapper.sh
-      dest: /usr/local/bin/ansible-playbook
-    - src: /usr/local/bin/venv-wrapper.sh
-      dest: /usr/local/bin/ansible-galaxy
-    - src: /usr/local/bin/venv-wrapper.sh
-      dest: /usr/local/bin/ansible-lint
-    - src: /usr/local/bin/venv-wrapper.sh
-      dest: /usr/local/bin/yamllint
+    - ansible
+    - ansible7
+    - ansible8
+    - molecule
+    - ansible-playbook
+    - ansible-galaxy
+    - ansible-lint
+    - yamllint
+    - e2j2
+    - yq
