@@ -362,7 +362,7 @@ jobs:
       - name: Install test dependencies.
         run: |
           sudo rm -f /usr/bin/yq
-          pip3 install ansible-core 
+          pip3 install ansible-core
           git clone -b dev https://github.com/de-it-krachten/ansible-playbooks-runner /tmp/ansible-playbooks-runner
           cd /tmp/ansible-playbooks-runner
           ansible-galaxy install -r roles/requirements.yml -p roles/
