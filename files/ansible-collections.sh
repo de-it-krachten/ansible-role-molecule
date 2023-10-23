@@ -161,7 +161,6 @@ do
 done
 shift $(($OPTIND -1))
 
-
 # Write all generic requirements
 cat <<EOF >${TMPFILE}base
 ---
@@ -171,8 +170,12 @@ collections:
   - ansible.posix
 EOF
 
+# Get all collection files
+Collection_files=$(ls .collections ${Roledir}/*/.collections ${TMPFILE}base 2>/dev/null)
+
 # Get all collections
-Collections=`ls -d .collections ${Roledir}/*/.collections ${TMPFILE}base 2>/dev/null`
+Collections=$(yq .collections $Collection_files | jq -s 'add|sort|unique' | yq -jc .)
+export collections="json:$Collections"
 
 # Exit if none are found
 if [[ -z $Collections ]]
@@ -181,26 +184,32 @@ then
   exit 0
 fi
 
-# Merge al collections into one
-for Collection in $Collections
-do
-  yq -y .collections $Collection | grep -vE "\[\]|ansible.builtin" | sed "s/.*- //"
-done | sort -u > ${TMPFILE}collections
-
-echo "collections:" > ${TMPFILE}
-for collection in `cat ${TMPFILE}collections`
-do
-  name=$(echo $collection | sed "s/:.*//")
-  version=$(echo $collection | sed "s/.*://")
-  echo "  - name: $name"
-  [[ $name != $version ]] && echo "    version: $version"
-done >> ${TMPFILE}
+# Create collection using jinja2 template
+export collections="json:$Collections"
+cat <<EOF > ${TMPFILE}.j2
+---
+collections:
+{% for collection in collections %}
+  - name: {{ collection | regex_replace(':.*') }}
+{%- set version = (collection | regex_replace('.*:')) -%}
+{% if version != collection %}
+    version: {{ version }}
+{% endif%}
+{% endfor %}
+EOF
+e2j2 -f ${TMPFILE}.j2
 
 # Display list of collections
-cat ${TMPFILE}
+cat ${TMPFILE} | sed "/^$/d"
 
 # Install all collections
 ansible-galaxy collection install -r ${TMPFILE}
 echo
+
+# Process playbook collections
+if [[ -f collections/requirements.yml ]]
+then
+  ansible-galaxy collection install -r collections/requirements.yml
+fi
 
 exit 0

@@ -171,6 +171,33 @@ function Showinfo
 
 }
 
+function Shell
+{
+
+  if [[ -z $Molecule_distributions ]]
+  then
+    echo "You need to specifiy an OS platform" >&2
+    exit 1
+  fi
+
+  local role1=$(basename $PWD)
+  local role2=$(echo $role1 | sed "s/ansible-role-//")
+  local os=$Molecule_distributions
+
+  case $Driver in
+    vagrant)
+      cd ~/.cache/molecule/$role1/default
+      vagrant ssh
+      ;;
+    docker)
+      Container=$(docker container ls | awk '/'$role2'-'$os'-/ {print $NF}')
+      docker exec -it $Container /bin/bash
+      ;;
+  esac
+
+}
+
+
 function Setup
 {
 
@@ -481,6 +508,8 @@ function Render_molecule_yaml
     Molecule_file=molecule/${Scenario}/molecule-${Driver}.yml.j2
     echo "Using '$Molecule_file'"
     cp ${Molecule_file} molecule/${Scenario}/molecule.yml.j2
+  else
+    echo "No file 'molecule/${Scenario}/molecule-${Driver}.yml.j2' found!!!" >&2
   fi
 
   Molecule_platforms_file=.molecule-platforms.yml
@@ -489,6 +518,8 @@ function Render_molecule_yaml
     Molecule_platforms_file=molecule/${Scenario}/.molecule-platforms-${Driver}.yml
     echo "Using '$Molecule_platforms_file'"
     cp $Molecule_platforms_file .molecule-platforms.yml
+  else
+    echo "No file 'molecule/${Scenario}/.molecule-platform-${Driver}.yml' found!!!" >&2
   fi
 
   printf "%80s\n" | tr ' ' '@' 
@@ -600,12 +631,13 @@ Wait_after_error=${MOLECULE_WAIT_AFTER_ERROR:-0}
 Setup=true
 Driver=${MOLECULE_DRIVER:-docker}
 Allow_platforms_not_found=false
+Shell=false
 
 # Sudo command for non-root
 [[ `id -un` != root ]] && Sudo=sudo
 
 # parse command line into arguments and check results of parsing
-while getopts :Ac:Cde:DhkKLm:pPr:s:SvWxXyzZ:-: OPT
+while getopts :Ac:Cde:DhkKLm:pPr:s:SvWxXyYzZ:-: OPT
 do
 
   # Support long options
@@ -669,6 +701,9 @@ do
         vagrant ssh
         exit 0
         ;;
+     Y|shell)
+        Shell=true
+        ;;
      z) Molecule_distributions="ubuntu2004,debian11,rockylinux8,fedora38"
         ;;
      Z) Molecule_distributions=$(echo $Molecule_distributions $OPTARG)
@@ -683,6 +718,12 @@ do
 
 done
 shift $(($OPTIND -1))
+
+if [[ $Shell == true ]]
+then
+  Shell
+  exit 0
+fi
 
 # Variable file
 if [[ -n $Vars_file ]]
