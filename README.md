@@ -28,8 +28,6 @@ Supported platforms
 - OracleLinux 9
 - AlmaLinux 8
 - AlmaLinux 9
-- SUSE Linux Enterprise 15<sup>1</sup>
-- openSUSE Leap 15
 - Debian 11 (Bullseye)
 - Debian 12 (Bookworm)
 - Ubuntu 20.04 LTS
@@ -61,12 +59,6 @@ molecule_os_packages:
   - jq
   - git
 
-# list of pypi packages required
-molecule_pip_packages:
-  - wheel
-  - e2j2
-  - yq
-
 # list of all virtual environments
 molecule_venvs_empty:
   - name: ansible7
@@ -96,6 +88,20 @@ molecule_venvs_empty:
     user: "{{ molecule_virtualenv_user | default('root') }}"
     python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
     site_packages: false
+    packages: []
+  - name: e2j2
+    state: "{{ molecule_ansible8_state | default('present') }}"
+    recreate: false
+    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+    site_packages: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
+    packages: []
+  - name: yq
+    state: "{{ molecule_ansible8_state | default('present') }}"
+    recreate: false
+    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+    site_packages: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
     packages: []
 
 
@@ -146,7 +152,7 @@ molecule_venvs:
     user: "{{ molecule_virtualenv_user | default('root') }}"
     packages:
       - "molecule<5"
-      - molecule-docker
+      # - molecule-docker
       - "ansible-compat<4"
   - name: e2j2
     state: "{{ molecule_ansible8_state | default('present') }}"
@@ -165,6 +171,19 @@ molecule_venvs:
     user: "{{ molecule_virtualenv_user | default('root') }}"
     packages:
       - yq
+
+# List of direct links or indirect via wrapper
+molecule_links:
+  - { link: /usr/local/bin/ansible7, cmd: /usr/local/venv/ansible7/bin/ansible, direct: true }
+  - { link: /usr/local/bin/ansible8, cmd: /usr/local/venv/ansible8/bin/ansible, direct: true }
+  - { link: /usr/local/bin/molecule, cmd: /usr/local/venv/molecule/bin/molecule, direct: false }
+  - { link: /usr/local/bin/ansible, cmd: /usr/local/venv/molecule/bin/ansible, direct: true }
+  - { link: /usr/local/bin/ansible-galaxy, cmd: /usr/local/venv/molecule/bin/ansible-galaxy, direct: true }
+  - { link: /usr/local/bin/ansible-playbook, cmd: /usr/local/venv/molecule/bin/ansible-playbook, direct: true }
+  - { link: /usr/local/bin/ansible-lint, cmd: /usr/local/venv/ansible-lint/bin/ansible-lint, direct: false }
+  - { link: /usr/local/bin/yamllint, cmd: /usr/local/venv/ansible-lint/bin/yamllint, direct: true }
+  - { link: /usr/local/bin/e2j2, cmd: /usr/local/venv/e2j2/bin/e2j2, direct: true }
+  - { link: /usr/local/bin/yq, cmd: /usr/local/venv/yq/bin/yq, direct: true }
 </pre></code>
 
 ### defaults/family-RedHat-8.yml
@@ -189,8 +208,12 @@ molecule_ansible7_state: skip
 
 ### defaults/Ubuntu-20.yml
 <pre><code>
-# Ansible version not supported
-molecule_ansible7_state: skip
+# Install python 3.9
+molecule_python39: true
+
+# Python executable to use
+molecule_ansible7_python: /usr/bin/python3.9
+molecule_ansible8_python: /usr/bin/python3.9
 </pre></code>
 
 
@@ -205,10 +228,10 @@ molecule_ansible7_state: skip
   vars:
     molecule_python_install: True
     python38: False
-    python39: False
+    python39: True
     python311: True
   roles:
-    - deitkrachten.python
+    - {'name': 'deitkrachten.python', 'version': 'dev'}
     - deitkrachten.docker
   tasks:
     - name: Include role 'molecule'

@@ -1,4 +1,8 @@
 ---
 
-# Ansible version not supported
-molecule_ansible7_state: skip
+# Install python 3.9
+molecule_python39: true
+
+# Python executable to use
+molecule_ansible7_python: /usr/bin/python3.9
+molecule_ansible8_python: /usr/bin/python3.9

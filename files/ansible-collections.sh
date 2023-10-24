@@ -177,17 +177,11 @@ Collection_files=$(ls .collections ${Roledir}/*/.collections ${TMPFILE}base 2>/d
 Collections=$(yq .collections $Collection_files | jq -s 'add|sort|unique' | yq -jc .)
 export collections="json:$Collections"
 
-# Exit if none are found
-if [[ -z $Collections ]]
-then
-  echo "No collections to be installed."
-  exit 0
-fi
-
 # Create collection using jinja2 template
 export collections="json:$Collections"
 cat <<EOF > ${TMPFILE}.j2
 ---
+{% if collections | length > 0 %}
 collections:
 {% for collection in collections %}
   - name: {{ collection | regex_replace(':.*') }}
@@ -196,19 +190,32 @@ collections:
     version: {{ version }}
 {% endif%}
 {% endfor %}
+{% else %}
+collections: []
+{% endif %}
 EOF
-e2j2 -f ${TMPFILE}.j2
+
+# Exit if templating fails
+if e2j2 -f ${TMPFILE}.j2 >/dev/null 2>&1
+then
+  sed "/^$/d" ${TMPFILE} > ${TMPFILE}.yml
+else
+  cat ${TMPFILE}.err
+  exit 1
+fi
 
 # Display list of collections
-cat ${TMPFILE} | sed "/^$/d"
+echo "Showing collections to install"
+cat ${TMPFILE}.yml
 
 # Install all collections
-ansible-galaxy collection install -r ${TMPFILE}
-echo
+echo "Installing combined list of collections"
+ansible-galaxy collection install -r ${TMPFILE}.yml
 
 # Process playbook collections
 if [[ -f collections/requirements.yml ]]
 then
+  echo "Installing collections from 'collections/requirements.yml'"
   ansible-galaxy collection install -r collections/requirements.yml
 fi
 

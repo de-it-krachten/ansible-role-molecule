@@ -21,6 +21,12 @@ platforms:
   centos7:
     ci: false
     supported: false
+  opensuse15:
+    ci: false
+    supported: false
+  sles15:
+    ci: false
+    supported: false
   debian10:
     ci: false
     supported: false
@@ -41,7 +47,7 @@ molecule:
     vars:
       molecule_python_install: true
       python38: false
-      python39: false
+      python39: true
       python311: true
     roles:
       - deitkrachten.python

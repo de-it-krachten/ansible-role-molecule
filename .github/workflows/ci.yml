@@ -75,7 +75,7 @@ jobs:
       - name: Install test dependencies.
         run: |
           sudo rm -f /usr/bin/yq
-          pip3 install "${{ matrix.ansible }}" "${{ matrix.ansible_lint }}" yamllint jmespath e2j2 yq
+          pip3 install "${{ matrix.ansible }}" "${{ matrix.ansible_lint }}" yamllint jmespath yq e2j2 jinja2-ansible-filters
 
       - name: Retrieve & install wrapper scripts
         run: |
@@ -223,22 +223,6 @@ jobs:
             ansible_lint: "ansible-lint>6,<7"
             hetznercloud: False
 
-          # - name: opensuse15_2.9
-          #   runs_on: ubuntu-latest
-          #   distro: opensuse15
-          #   playbook: converge.yml
-          #   ansible: "ansible==2.9.27"
-          #   ansible_lint: "ansible-lint==5.4.0"
-          #   hetznercloud: False
-          # - name: opensuse15_2.14
-          - name: opensuse15
-            runs_on: ubuntu-latest
-            distro: opensuse15
-            playbook: converge.yml
-            ansible: "ansible-core>2.14,<2.15"
-            ansible_lint: "ansible-lint>6,<7"
-            hetznercloud: False
-
           # - name: debian11_2.9
           #   runs_on: ubuntu-latest
           #   distro: debian11
@@ -363,7 +347,7 @@ jobs:
         run: |
           sudo rm -f /usr/bin/yq
 
-          pip3 install e2j2 yq
+          pip3 install yq e2j2 jinja2-ansible-filters
           pip3 install "${{ matrix.ansible }}" "${{ matrix.ansible_lint }}" "ansible-compat<4" "molecule<5" yamllint jmespath
 
           echo "MOLECULE_DRIVER = $MOLECULE_DRIVER"

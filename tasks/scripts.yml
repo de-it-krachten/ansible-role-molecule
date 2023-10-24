@@ -1,0 +1,18 @@
+---
+
+- name: Distribute all support scripts & files
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: /usr/local/bin/{{ item }}
+    mode: "0755"
+  become: yes
+  loop:
+    - ansible-collections.sh
+    - ansible-fix.sh
+    - ansible-galaxy.sh
+    - ansible-lint.sh
+    - ansible-requirements-clean.sh
+    - functions_ansible.sh
+    - functions.sh
+    - molecule-test.sh
+    - venv-wrapper.sh
