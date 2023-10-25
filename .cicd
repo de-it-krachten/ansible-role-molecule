@@ -641,6 +641,66 @@ platforms:
           - network
         environment:
           DOCKER_TLS_CERTDIR: /certs
+  win2012r2:
+    name: Windows Server 2012 R2
+    ci: false
+    supported: false
+    galaxy:
+      name: Windows
+      version: all
+    molecule:
+      vagrant:
+        box: jborean93/WindowsServer2012R2
+        groups:
+          - windows
+        interfaces:
+          - network_name: private_network
+            type: dhcp
+  win2016:
+    name: Windows Server 2016
+    ci: false
+    supported: false
+    galaxy:
+      name: Windows
+      version: all
+    molecule:
+      vagrant:
+        box: jborean93/WindowsServer2016
+        groups:
+          - windows
+        interfaces:
+          - network_name: private_network
+            type: dhcp
+  win2019:
+    name: Windows Server 2019
+    ci: false
+    supported: false
+    galaxy:
+      name: Windows
+      version: all
+    molecule:
+      vagrant:
+        box: jborean93/WindowsServer2019
+        groups:
+          - windows
+        interfaces:
+          - network_name: private_network
+            type: dhcp
+  win2022:
+    name: Windows Server 2022
+    ci: false
+    supported: false
+    galaxy:
+      name: Windows
+      version: all
+    molecule:
+      vagrant:
+        box: jborean93/WindowsServer2022
+        groups:
+          - windows
+        interfaces:
+          - network_name: private_network
+            type: dhcp
 
 # List of platform deviations
 platforms_overwrite: {}
@@ -725,6 +785,8 @@ molecule:
     - hetznercloud
     - podman
   driver: docker
+  ansible:
+   verbosity: 0
   converge:
     playbooks: []
     vars: {}
@@ -749,6 +811,17 @@ molecule:
   nodes:
     - name: node1
       groups: []
+  group_vars:
+    linux:
+      ansible_user: vagrant
+      ansible_password: vagrant
+    windows:
+      ansible_user: vagrant
+      ansible_password: vagrant
+      ansible_become_user: vagrant
+      ansible_become_method: runas
+      ansible_connection: ssh
+      ansible_shell_type: cmd
 
 # templates
 ci_templates:

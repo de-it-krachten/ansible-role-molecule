@@ -56,8 +56,8 @@ HOSTNAME=$(hostname -s)
 
 TMP_PATH=/tmp/ansible-fqcn-converter
 
-E2J2=/usr/local/bin/e2j2
-YQ=/usr/local/bin/yq
+[[ -x /usr/local/bin/e2j2 ]] && E2J2=/usr/local/bin/e2j2 || E2J2=e2j2
+[[ -x /usr/local/bin/yq ]] && YQ=/usr/local/bin/yq || YQ=yq
 
 
 ##############################################################
