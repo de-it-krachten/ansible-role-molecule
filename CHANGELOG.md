@@ -1,3 +1,18 @@
+# [1.6.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.5.0...v1.6.0) (2023-10-25)
+
+
+### Bug Fixes
+
+* Add support for collections/requirements.yml ([2699f51](https://github.com/de-it-krachten/ansible-role-molecule/commit/2699f5126c92021ea41f4cda4f5b31ec4da49ac4))
+* Fix loop label to string ([342c271](https://github.com/de-it-krachten/ansible-role-molecule/commit/342c2714de975e8077818db103c2354cc31d9541))
+* Move tools into separate virtual environments ([8801bea](https://github.com/de-it-krachten/ansible-role-molecule/commit/8801bea1fdb82fdef6480a900af5c01aa8d90234))
+
+
+### Features
+
+* Split up different tools into separate venv ([098bfd0](https://github.com/de-it-krachten/ansible-role-molecule/commit/098bfd0a91c3cc9e4ee20d242d23a65c369be49b))
+* Update supported platforms & CI ([a2f06e2](https://github.com/de-it-krachten/ansible-role-molecule/commit/a2f06e2e59c4675609a52c4b968b7bccd1bf60e6))
+
 # [1.5.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.4.0...v1.5.0) (2023-05-06)
 
 
