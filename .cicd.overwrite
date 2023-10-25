@@ -7,12 +7,24 @@ generic:
   role_description: |
     Install & manage molecule for testing Ansible roles
 
+# Depencies
+dependencies:
+  roles:
+    - deitkrachten.python
+    - deitkrachten.docker
+
 # Supported platforms
 platforms:
   rhel7:
     ci: false
     supported: false
   centos7:
+    ci: false
+    supported: false
+  opensuse15:
+    ci: false
+    supported: false
+  sles15:
     ci: false
     supported: false
   debian10:
@@ -30,6 +42,13 @@ molecule:
     roles_extra:
       - deitkrachten.package
       - deitkrachten.python
+      - deitkrachten.docker
   converge:
     vars:
       molecule_python_install: true
+      python38: false
+      python39: true
+      python311: true
+    roles:
+      - deitkrachten.python
+      - deitkrachten.docker

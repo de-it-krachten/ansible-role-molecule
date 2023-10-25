@@ -161,7 +161,6 @@ do
 done
 shift $(($OPTIND -1))
 
-
 # Write all generic requirements
 cat <<EOF >${TMPFILE}base
 ---
@@ -171,36 +170,53 @@ collections:
   - ansible.posix
 EOF
 
-# Get all collections
-Collections=`ls -d .collections ${Roledir}/*/.collections ${TMPFILE}base 2>/dev/null`
+# Get all collection files
+Collection_files=$(ls .collections ${Roledir}/*/.collections ${TMPFILE}base 2>/dev/null)
 
-# Exit if none are found
-if [[ -z $Collections ]]
+# Get all collections
+Collections=$(yq .collections $Collection_files | jq -s 'add|sort|unique' | yq -jc .)
+export collections="json:$Collections"
+
+# Create collection using jinja2 template
+export collections="json:$Collections"
+cat <<EOF > ${TMPFILE}.j2
+---
+{% if collections | length > 0 %}
+collections:
+{% for collection in collections %}
+  - name: {{ collection | regex_replace(':.*') }}
+{%- set version = (collection | regex_replace('.*:')) -%}
+{% if version != collection %}
+    version: {{ version }}
+{% endif%}
+{% endfor %}
+{% else %}
+collections: []
+{% endif %}
+EOF
+
+# Exit if templating fails
+if e2j2 -f ${TMPFILE}.j2 >/dev/null 2>&1
 then
-  echo "No collections to be installed."
-  exit 0
+  sed "/^$/d" ${TMPFILE} > ${TMPFILE}.yml
+else
+  cat ${TMPFILE}.err
+  exit 1
 fi
 
-# Merge al collections into one
-for Collection in $Collections
-do
-  yq -y .collections $Collection | egrep -v "\[\]|ansible.builtin" | sed "s/.*- //"
-done | sort -u > ${TMPFILE}collections
-
-echo "collections:" > ${TMPFILE}
-for collection in `cat ${TMPFILE}collections`
-do
-  name=$(echo $collection | sed "s/:.*//")
-  version=$(echo $collection | sed "s/.*://")
-  echo "  - name: $name"
-  [[ $name != $version ]] && echo "    version: $version"
-done >> ${TMPFILE}
-
 # Display list of collections
-cat ${TMPFILE}
+echo "Showing collections to install"
+cat ${TMPFILE}.yml
 
 # Install all collections
-ansible-galaxy collection install -r ${TMPFILE}
-echo
+echo "Installing combined list of collections"
+ansible-galaxy collection install -r ${TMPFILE}.yml
+
+# Process playbook collections
+if [[ -f collections/requirements.yml ]]
+then
+  echo "Installing collections from 'collections/requirements.yml'"
+  ansible-galaxy collection install -r collections/requirements.yml
+fi
 
 exit 0

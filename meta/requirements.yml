@@ -1,3 +1,10 @@
 ---
 
-[]
+- name: deitkrachten.python
+  src: https://github.com/de-it-krachten/ansible-role-python.git
+  version: main
+  scm: git
+- name: deitkrachten.docker
+  src: https://github.com/de-it-krachten/ansible-role-docker.git
+  version: main
+  scm: git

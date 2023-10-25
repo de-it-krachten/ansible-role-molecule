@@ -155,9 +155,10 @@ Force=false
 Echo=
 Gitignore=false
 Ansible_lint=false
+Path=$PWD
 
 # parse command line into arguments and check results of parsing
-while getopts :aAdDFgGhqv-: OPT
+while getopts :aAdDFgGhp:qv-: OPT
 do
 
   # Support long options
@@ -197,6 +198,9 @@ do
       Usage
       exit 0
       ;;
+    p|path)
+      Path=$OPTARG
+      ;;
     q|quiet)
       Verbose_level=-1
       ;;
@@ -217,8 +221,11 @@ do
 done
 shift $(($OPTIND -1))
 
+# Switch to the ansible location
+[[ $Path != $PWD ]] && cd $Path
+
 # parameters
-Reqfile=${1:-'roles/requirements.yml'}
+Reqfile=${1:-roles/requirements.yml}
 
 Galaxy=`which ansible-galaxy 2>/dev/null`
 if [[ ! -x $Galaxy ]]

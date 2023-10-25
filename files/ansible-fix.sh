@@ -154,17 +154,17 @@ function Fix_file
   Type=${Type_overwrite:-""}
   # tasks
   [[ -z $Type && $File =~ ^([a-zA-Z0-9_-]+\.yml|playbooks/|tasks/|handlers/) ]] && Type=tasks
-  [[ -z $Type && $File =~ ^(roles/[a-z]+/tasks/|roles/[a-z]+/handlers/) ]] && Type=tasks
+  [[ -z $Type && $File =~ ^(roles/[a-z_]+/tasks/|roles/[a-z_]+/handlers/) ]] && Type=tasks
   [[ -z $Type && $File =~ ^tests/(playbooks|test).yml ]] && Type=tasks
   [[ -z $Type && $File =~ ^(tasks-handlers/) ]] && Type=tasks
   # variables
   [[ -z $Type && $File =~ ^(host_vars/|group_vars/|vars/|defaults/) ]] && Type=vars
-  [[ -z $Type && $File =~ ^(roles/[a-z]+/vars/|roles/[a-z]+/defaults/) ]] && Type=vars
+  [[ -z $Type && $File =~ ^(roles/[a-z_]+/vars/|roles/[a-z_]+/defaults/) ]] && Type=vars
   [[ -z $Type && $File =~ ^tests/vars.yml ]] && Type=vars
   # meta
   [[ -z $Type && $File =~ ^(meta/) ]] && Type=meta
   [[ -z $Type && $File =~ ^(roles/requirements.yml$) ]] && Type=meta
-  [[ -z $Type && $File =~ ^(roles/[a-z]+/meta/) ]] && Type=meta
+  [[ -z $Type && $File =~ ^(roles/[a-z_]+/meta/) ]] && Type=meta
 
   [[ -z $Type ]] && echo "Unable to identify type" >&2 && exit 1
 

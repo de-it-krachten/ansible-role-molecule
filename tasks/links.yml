@@ -1,0 +1,23 @@
+---
+
+- name: Setup symlinks (direct}
+  ansible.builtin.file:
+    src: "{{ item.cmd }}"
+    dest: "{{ item.link }}"
+    owner: root
+    group: root
+    state: link
+    force: true
+  loop: "{{ molecule_links }}"
+  when: item.direct | bool
+
+- name: Setup symlinks (indirect w/ wrapper)
+  ansible.builtin.file:
+    src: /usr/local/bin/venv-wrapper.sh
+    dest: "{{ item.link }}"
+    owner: root
+    group: root
+    state: link
+    force: true
+  loop: "{{ molecule_links }}"
+  when: not item.direct | bool

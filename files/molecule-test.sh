@@ -28,6 +28,12 @@ BASENAME="${FILENAME##*/}"
 BASENAME_ROOT=${BASENAME%%.*}
 DIRNAME="${FILENAME%/*}"
 
+# Get name of symlink used to execute
+FILENAME1=$(realpath -s $0)
+BASENAME1="${FILENAME1##*/}"
+BASENAME1_ROOT=${BASENAME1%%.*}
+DIRNAME1="${FILENAME1%/*}"
+
 # Define temorary files, debug direcotory, config and lock file
 TMPDIR=/tmp
 VARTMPDIR=/var/tmp
@@ -106,17 +112,24 @@ Flags :
    -h          : Prints this help message
    -v          : Verbose mode
 
+   -A          : Allow to execute on unsupported platforms
    -c <path>   : Path where role is located (default=current path)
-   -e key=val  : Extra vars for molecule
+   -C          : Disable colors in output
+   -e <file>   : File with extra vars to use
    -k          : Do not destroy the container
+   -K          : 
+   -L          : Disable logging to file 
    -m <mode>   : Molecule phase to execute (default=test)
    -p          : Execute dependency phase before test (default)
                  Useful when depending on custom tasks from other roles (e.g. lint)
    -P          : Do NOT run the dependency phase before test
+   -r <driver> : Molecule driver to use (default=docker)
    -s <names>  : Scenario(s) to execute (divided by comma's)
+   -S          : Skip setup
    -W          : Wait for 900 seconds after failure
    -x          : Fail if deprecation warning is found
    -X          : Fail if warning is found (non-deprecation)
+   -z          : Set of default distributions (ubuntu2004,debian11,rockylinux8,fedora38)"
    -Z <x,y>    : Distributions to test
 
 Examples:
@@ -158,6 +171,33 @@ function Showinfo
 
 }
 
+function Shell
+{
+
+  if [[ -z $Molecule_distributions ]]
+  then
+    echo "You need to specifiy an OS platform" >&2
+    exit 1
+  fi
+
+  local role1=$(basename $PWD)
+  local role2=$(echo $role1 | sed "s/ansible-role-//")
+  local os=$Molecule_distributions
+
+  case $Driver in
+    vagrant)
+      cd ~/.cache/molecule/$role1/default
+      vagrant ssh
+      ;;
+    docker)
+      Container=$(docker container ls | awk '/'$role2'-'$os'-/ {print $NF}')
+      docker exec -it $Container /bin/bash
+      ;;
+  esac
+
+}
+
+
 function Setup
 {
 
@@ -165,15 +205,15 @@ function Setup
   [[ $Setup_executed == true ]] && return 0
 
   # Install pypi packages we need
-  Install_pip e2j2
-  Install_pip yq
+  command -v e2j2 >/dev/null 2>&1 || Install_pip e2j2
+  command -v yq >/dev/null 2>&1 || Install_pip yq
 
   # Get all roles needed by molecule
   rm -fr /tmp/roles
   ansible-galaxy install -r molecule/default/requirements.yml -p /tmp/roles || exit 1
 
   # Get all collections needed by molecule
-  ansible-collections.sh -r /tmp/roles || exit 1
+  ${DIRNAME1}/ansible-collections.sh -r /tmp/roles || exit 1
 
   # Make this step not run a second time
   export Setup_executed=true
@@ -198,10 +238,10 @@ function Molecule2
 function Install_pip
 {
 
-  if ! pip show $1 >/dev/null 2>&1
+  if ! pip3 show $1 >/dev/null 2>&1
   then
     echo "Installing pip package '$1'"
-    pip install $1 || exit 1
+    pip3 install $1 || exit 1
   fi
 
 }
@@ -468,6 +508,8 @@ function Render_molecule_yaml
     Molecule_file=molecule/${Scenario}/molecule-${Driver}.yml.j2
     echo "Using '$Molecule_file'"
     cp ${Molecule_file} molecule/${Scenario}/molecule.yml.j2
+  else
+    echo "No file 'molecule/${Scenario}/molecule-${Driver}.yml.j2' found!!!" >&2
   fi
 
   Molecule_platforms_file=.molecule-platforms.yml
@@ -476,6 +518,8 @@ function Render_molecule_yaml
     Molecule_platforms_file=molecule/${Scenario}/.molecule-platforms-${Driver}.yml
     echo "Using '$Molecule_platforms_file'"
     cp $Molecule_platforms_file .molecule-platforms.yml
+  else
+    echo "No file 'molecule/${Scenario}/.molecule-platform-${Driver}.yml' found!!!" >&2
   fi
 
   printf "%80s\n" | tr ' ' '@' 
@@ -539,8 +583,8 @@ function Render_molecule_yaml
 function Patch_ansible29
 {
 
-  ansible=$(pip show ansible 2>/dev/null | awk '/Version:/ {print $2}')
-  ansible_core=$(pip show ansible-core 2>/dev/null | awk '/Version:/ {print $2}')
+  ansible=$(pip3 show ansible 2>/dev/null | awk '/Version:/ {print $2}')
+  ansible_core=$(pip3 show ansible-core 2>/dev/null | awk '/Version:/ {print $2}')
   ansible=${ansible:-$ansible_core}
   echo "Ansible version = $ansible"
   if [[ $ansible =~ 2.9.* ]]
@@ -565,7 +609,7 @@ function Patch_ansible29
 #############################################################
 
 # Make sure temporary files are cleaned at exit
-trap 'rm -f ${TMPFILE}* ; echo "Log file : $LOGFILE"' EXIT
+trap 'rm -f ${TMPFILE}* ; [[ $Log == true ]] && echo "Log file : $LOGFILE"' EXIT
 trap 'exit 1' HUP QUIT KILL TERM INT
 
 # Defaults
@@ -587,12 +631,13 @@ Wait_after_error=${MOLECULE_WAIT_AFTER_ERROR:-0}
 Setup=true
 Driver=${MOLECULE_DRIVER:-docker}
 Allow_platforms_not_found=false
+Shell=false
 
 # Sudo command for non-root
 [[ `id -un` != root ]] && Sudo=sudo
 
 # parse command line into arguments and check results of parsing
-while getopts :Ac:Cde:DhkKLm:pPr:s:SvWxXzZ:-: OPT
+while getopts :Ac:Cde:DhkKLm:pPr:s:SvWxXyYzZ:-: OPT
 do
 
   # Support long options
@@ -650,7 +695,16 @@ do
         ;;
      X) Fail_on_warning=true
         ;;
-     z) Molecule_distributions="ubuntu2004,debian11,rockylinux8,fedora36"
+     y) x=$(basename $PWD)
+        Log=false
+        cd ~/.cache/molecule/${x}/default
+        vagrant ssh
+        exit 0
+        ;;
+     Y|shell)
+        Shell=true
+        ;;
+     z) Molecule_distributions="ubuntu2004,debian11,rockylinux8,fedora38"
         ;;
      Z) Molecule_distributions=$(echo $Molecule_distributions $OPTARG)
         ;;
@@ -664,6 +718,12 @@ do
 
 done
 shift $(($OPTIND -1))
+
+if [[ $Shell == true ]]
+then
+  Shell
+  exit 0
+fi
 
 # Variable file
 if [[ -n $Vars_file ]]
@@ -689,9 +749,9 @@ Patch_ansible29
 # destro, create and test without destroy
 if [[ $Destroy_and_setup == true ]]
 then
-  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -m destroy -Z "${Molecule_distributions}" $Verbose1
-  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -m create -Z "${Molecule_distributions}" $Verbose1 || exit $?
-  ${DIRNAME}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -k -Z "${Molecule_distributions}" $Verbose1 || exit $?
+  ${DIRNAME1}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -m destroy -Z "${Molecule_distributions}" $Verbose1
+  ${DIRNAME1}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -m create -Z "${Molecule_distributions}" $Verbose1 || exit $?
+  ${DIRNAME1}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -k -Z "${Molecule_distributions}" $Verbose1 || exit $?
   exit 0
 fi
 
@@ -717,7 +777,7 @@ fi
 if [[ -d roles ]]
 then
   # Clean all present roles not directlry part of this repository
-  ansible-requirements-clean.sh -F -v -q
+  ${DIRNAME1}/ansible-requirements-clean.sh -F -v -q
   Nested_roles=true
   Roles=`ls roles | grep -v requirements.yml`
 elif [[ ( ! -d tasks && ! -d library ) || -d group_vars || -d playbooks ]]

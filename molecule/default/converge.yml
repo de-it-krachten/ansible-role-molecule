@@ -5,6 +5,12 @@
   become: "yes"
   vars:
     molecule_python_install: True
+    python38: False
+    python39: True
+    python311: True
+  roles:
+    - deitkrachten.python
+    - deitkrachten.docker
   tasks:
     - name: Include role 'ansible-role-molecule'
       ansible.builtin.include_role:
