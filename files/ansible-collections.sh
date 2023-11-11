@@ -117,6 +117,7 @@ trap 'exit 1' HUP QUIT KILL TERM INT
 Verbose=false
 Dry_run=false
 Echo=
+Format=v2
 
 Roledir=roles
 
@@ -168,21 +169,39 @@ shift $(($OPTIND -1))
 cat <<EOF >${TMPFILE}base
 ---
 collections:
+  - ansible.posix
+  - ansible.windows
   - community.docker
   - community.general
-  - ansible.posix
+  - community.windows
 EOF
 
 # Get all collection files
 Collection_files=$(ls .collections ${Roledir}/*/.collections ${TMPFILE}base 2>/dev/null)
 
 # Get all collections
-Collections=$($YQ .collections $Collection_files | jq -s 'add|sort|unique' | $YQ -jc .)
+Collections=$($YQ .collections $Collection_files | jq -s 'add|sort|unique' | jq -jc 'del(.[] | nulls)')
 export collections="json:$Collections"
 
 # Create collection using jinja2 template
-export collections="json:$Collections"
-cat <<EOF > ${TMPFILE}.j2
+if [[ $Format == v1 ]]
+then
+  echo "Creating jinja template (v1)"
+  cat <<EOF > ${TMPFILE}.j2
+---
+{% if collections | length > 0 %}
+collections:
+{% for collection in collections %}
+  - {{ collection }}
+{% endfor %}
+{% else %}
+collections: []
+{% endif %}
+EOF
+else
+  echo "Creating jinja template (v2)"
+  export collections="json:$Collections"
+  cat <<EOF > ${TMPFILE}.j2
 ---
 {% if collections | length > 0 %}
 collections:
@@ -197,8 +216,10 @@ collections:
 collections: []
 {% endif %}
 EOF
+fi
 
 # Exit if templating fails
+echo "Creating collections file from template"
 if $E2J2 -f ${TMPFILE}.j2 >/dev/null 2>&1
 then
   sed "/^$/d" ${TMPFILE} > ${TMPFILE}.yml

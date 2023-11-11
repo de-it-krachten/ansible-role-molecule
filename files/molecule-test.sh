@@ -124,6 +124,7 @@ Flags :
                  Useful when depending on custom tasks from other roles (e.g. lint)
    -P          : Do NOT run the dependency phase before test
    -r <driver> : Molecule driver to use (default=docker)
+   -R <provider> : backend provider for vagrant (virtualbox,libvirt default=virtualbox)
    -s <names>  : Scenario(s) to execute (divided by comma's)
    -S          : Skip setup
    -W          : Wait for 900 seconds after failure
@@ -525,6 +526,7 @@ function Render_molecule_yaml
   printf "%80s\n" | tr ' ' '@' 
   echo "scenario               = ${Scenario}"
   echo "driver                 = ${Driver}"
+  echo "provider               = ${Provider:-'N/A'}"
   echo "molecule file          = $Molecule_file"
   echo "molecule platform file = $Molecule_platforms_file"
   printf "%80s\n" | tr ' ' '@' 
@@ -637,7 +639,7 @@ Shell=false
 [[ `id -un` != root ]] && Sudo=sudo
 
 # parse command line into arguments and check results of parsing
-while getopts :Ac:Cde:DhkKLm:pPr:s:SvWxXyYzZ:-: OPT
+while getopts :Ac:Cde:DhkKLm:pPr:R:s:SvWxXyYzZ:-: OPT
 do
 
   # Support long options
@@ -680,6 +682,9 @@ do
      P) Pre_dependency=false
         ;;
      r) Driver=$OPTARG
+        ;;
+     R) Provider=$OPTARG
+        export VAGRANT_DEFAULT_PROVIDER=$Provider
         ;;
      s) Scenarios=`echo $OPTARG | sed "s/,/ /g"`
         ;;
@@ -749,9 +754,12 @@ Patch_ansible29
 # destro, create and test without destroy
 if [[ $Destroy_and_setup == true ]]
 then
-  ${DIRNAME1}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -m destroy -Z "${Molecule_distributions}" $Verbose1
-  ${DIRNAME1}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -m create -Z "${Molecule_distributions}" $Verbose1 || exit $?
-  ${DIRNAME1}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -k -Z "${Molecule_distributions}" $Verbose1 || exit $?
+  Args="${Debug1} ${Verbose1} -L"
+  [[ -n $Driver ]] && Args="$Args -r $Driver"
+  [[ -n $Provider ]] && Args="$Args -R $Provider"
+  ${DIRNAME1}/${BASENAME} ${Args} -m destroy -Z "${Molecule_distributions}"
+  ${DIRNAME1}/${BASENAME} ${Args} -m create -Z "${Molecule_distributions}" || exit $?
+  ${DIRNAME1}/${BASENAME} ${Args} -k -Z "${Molecule_distributions}" || exit $?
   exit 0
 fi
 
