@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.6.0...v1.6.1) (2023-11-11)
+
+
+### Bug Fixes
+
+* Fix yq/e2j2 binary location for collection install ([757fb02](https://github.com/de-it-krachten/ansible-role-molecule/commit/757fb02c05a1f1d48f5e835d6d374803506a24f3))
+
 # [1.6.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.5.0...v1.6.0) (2023-10-25)
 
 
