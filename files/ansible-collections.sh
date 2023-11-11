@@ -56,6 +56,9 @@ HOSTNAME=$(hostname -s)
 
 TMP_PATH=/tmp/ansible-fqcn-converter
 
+[[ -x /usr/local/bin/e2j2 ]] && E2J2=/usr/local/bin/e2j2 || E2J2=e2j2
+[[ -x /usr/local/bin/yq ]] && YQ=/usr/local/bin/yq || YQ=yq
+
 
 ##############################################################
 #
@@ -174,7 +177,7 @@ EOF
 Collection_files=$(ls .collections ${Roledir}/*/.collections ${TMPFILE}base 2>/dev/null)
 
 # Get all collections
-Collections=$(yq .collections $Collection_files | jq -s 'add|sort|unique' | yq -jc .)
+Collections=$($YQ .collections $Collection_files | jq -s 'add|sort|unique' | $YQ -jc .)
 export collections="json:$Collections"
 
 # Create collection using jinja2 template
@@ -196,7 +199,7 @@ collections: []
 EOF
 
 # Exit if templating fails
-if e2j2 -f ${TMPFILE}.j2 >/dev/null 2>&1
+if $E2J2 -f ${TMPFILE}.j2 >/dev/null 2>&1
 then
   sed "/^$/d" ${TMPFILE} > ${TMPFILE}.yml
 else

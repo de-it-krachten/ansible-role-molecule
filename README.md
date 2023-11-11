@@ -14,7 +14,6 @@ Install & manage molecule for testing Ansible roles
 - deitkrachten.docker
 
 #### Collections
-- community.general
 
 ## Platforms
 
@@ -224,14 +223,14 @@ molecule_ansible8_python: /usr/bin/python3.9
 <pre><code>
 - name: sample playbook for role 'molecule'
   hosts: all
-  become: "yes"
+  become: 'yes'
   vars:
-    molecule_python_install: True
-    python38: False
-    python39: True
-    python311: True
+    molecule_python_install: true
+    python38: false
+    python39: true
+    python311: true
   roles:
-    - {'name': 'deitkrachten.python', 'version': 'dev'}
+    - deitkrachten.python
     - deitkrachten.docker
   tasks:
     - name: Include role 'molecule'
