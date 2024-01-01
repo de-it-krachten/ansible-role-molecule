@@ -54,8 +54,6 @@ HOSTNAME=$(hostname -s)
 #
 ##############################################################
 
-TMP_PATH=/tmp/ansible-fqcn-converter
-
 [[ -x /usr/local/bin/e2j2 ]] && E2J2=/usr/local/bin/e2j2 || E2J2=e2j2
 [[ -x /usr/local/bin/yq ]] && YQ=/usr/local/bin/yq || YQ=yq
 
@@ -98,6 +96,9 @@ Flags :
    -h|--help    : Prints this help message
    -v|--verbose : Verbose output
 
+   -f|--format  : Output format (default=v2)
+   -r|--roledir : Directory to search for roles
+
 EOF
 
 }
@@ -122,7 +123,7 @@ Format=v2
 Roledir=roles
 
 # parse command line into arguments and check results of parsing
-while getopts :dDhr:v-: OPT
+while getopts :c:dDf:hr:v-: OPT
 do
 
   # Support long options
@@ -133,6 +134,9 @@ do
   fi
 
   case $OPT in
+    c|coldir)
+      Coldir=$OPTARG
+      ;;
     d|debug)
       Verbose=true
       set -vx
@@ -141,6 +145,9 @@ do
       Dry_run=true
       Dry_run1="-D"
       Echo=echo
+      ;;
+    f|format)
+      Format=$OPTARG
       ;;
     h|help)
       Usage
@@ -192,7 +199,15 @@ then
 {% if collections | length > 0 %}
 collections:
 {% for collection in collections %}
-  - {{ collection }}
+{% if collection | type_debug == 'dict' %}
+{% if collection.version is defined %}
+- {{ collection.name }}:{{ collection.version }}
+{% else %}
+- {{ collection.name }}
+{% endif %}
+{% else %}
+- {{ collection }}
+{% endif %}
 {% endfor %}
 {% else %}
 collections: []
@@ -206,11 +221,16 @@ else
 {% if collections | length > 0 %}
 collections:
 {% for collection in collections %}
-  - name: {{ collection | regex_replace(':.*') }}
-{%- set version = (collection | regex_replace('.*:')) -%}
+{% if collection | type_debug == 'dict' %}
+- {{ collection }}
+{% else %}
+{% set name = (collection | regex_replace(':.*')) %}
+{% set version = (collection | regex_replace('.*:')) %}
+- name: {{ name }}
 {% if version != collection %}
-    version: {{ version }}
-{% endif%}
+  version: {{ version }}
+{% endif %}
+{% endif %}
 {% endfor %}
 {% else %}
 collections: []
@@ -222,7 +242,7 @@ fi
 echo "Creating collections file from template"
 if $E2J2 -f ${TMPFILE}.j2 >/dev/null 2>&1
 then
-  sed "/^$/d" ${TMPFILE} > ${TMPFILE}.yml
+  yq -y . ${TMPFILE} > ${TMPFILE}.yml
 else
   cat ${TMPFILE}.err
   exit 1
@@ -232,15 +252,23 @@ fi
 echo "Showing collections to install"
 cat ${TMPFILE}.yml
 
+# Activate custom collections location
+if [[ -n $Coldir ]]
+then
+  export ANSIBLE_COLLECTIONS_PATH=$Coldir
+  Galaxy_args="-p $Coldir"
+fi
+
 # Install all collections
 echo "Installing combined list of collections"
-ansible-galaxy collection install -r ${TMPFILE}.yml
+ansible-galaxy collection install $Galaxy_args -r ${TMPFILE}.yml 
 
 # Process playbook collections
 if [[ -f collections/requirements.yml ]]
 then
   echo "Installing collections from 'collections/requirements.yml'"
-  ansible-galaxy collection install -r collections/requirements.yml
+  ansible-galaxy collection install $Galaxy_args -r collections/requirements.yml
 fi
 
+# Exit cleanly
 exit 0
