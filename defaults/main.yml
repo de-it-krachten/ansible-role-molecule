@@ -124,7 +124,7 @@ molecule_venvs:
 
 # List of direct links or indirect via wrapper
 molecule_links:
-#  - { link: /usr/local/bin/ansible7, cmd: /usr/local/venv/ansible7/bin/ansible, direct: true }
+  # - { link: /usr/local/bin/ansible7, cmd: /usr/local/venv/ansible7/bin/ansible, direct: true }
   - { link: /usr/local/bin/ansible8, cmd: /usr/local/venv/ansible8/bin/ansible, direct: true }
   - { link: /usr/local/bin/ansible9, cmd: /usr/local/venv/ansible9/bin/ansible, direct: true }
   - { link: /usr/local/bin/molecule, cmd: /usr/local/venv/ansible9/bin/molecule, direct: false }

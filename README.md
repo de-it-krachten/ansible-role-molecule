@@ -14,6 +14,7 @@ Install & manage molecule for testing Ansible roles
 - deitkrachten.docker
 
 #### Collections
+None
 
 ## Platforms
 
@@ -60,129 +61,140 @@ molecule_os_packages:
 
 # list of all virtual environments
 molecule_venvs_empty:
-  - name: ansible7
-    state: "{{ molecule_ansible7_state | default('present') }}"
-    recreate: false
-    user: "{{ molecule_virtualenv_user | default('root') }}"
-    python: "{{ molecule_ansible7_python | default('/usr/bin/python3') }}"
-    site_packages: false
-    packages: []
-  - name: ansible8
+  - name: docker-compose
     state: "{{ molecule_ansible8_state | default('present') }}"
     recreate: false
     user: "{{ molecule_virtualenv_user | default('root') }}"
     python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
     site_packages: false
     packages: []
-  - name: molecule
-    state: "{{ molecule_ansible7_state | default('present') }}"
-    recreate: false
-    user: "{{ molecule_virtualenv_user | default('root') }}"
-    python: "{{ molecule_ansible7_python | default('/usr/bin/python3') }}"
-    site_packages: false
-    packages: []
-  - name: ansible-lint
-    state: "{{ molecule_ansible8_state | default('present') }}"
-    recreate: false
-    user: "{{ molecule_virtualenv_user | default('root') }}"
-    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
-    site_packages: false
-    packages: []
-  - name: e2j2
-    state: "{{ molecule_ansible8_state | default('present') }}"
-    recreate: false
-    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
-    site_packages: false
-    user: "{{ molecule_virtualenv_user | default('root') }}"
-    packages: []
-  - name: yq
-    state: "{{ molecule_ansible8_state | default('present') }}"
-    recreate: false
-    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
-    site_packages: false
-    user: "{{ molecule_virtualenv_user | default('root') }}"
-    packages: []
+##  - name: ansible8
+##    state: "{{ molecule_ansible8_state | default('present') }}"
+##    recreate: false
+##    user: "{{ molecule_virtualenv_user | default('root') }}"
+##    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+##    site_packages: false
+##    packages: []
+##  - name: ansible9
+##    state: "{{ molecule_ansible9_state | default('present') }}"
+##    recreate: false
+##    user: "{{ molecule_virtualenv_user | default('root') }}"
+##    python: "{{ molecule_ansible9_python | default('/usr/bin/python3') }}"
+##    site_packages: false
+##    packages: []
+##  - name: e2j2
+##    state: "{{ molecule_ansible8_state | default('present') }}"
+##    recreate: false
+##    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+##    site_packages: false
+##    user: "{{ molecule_virtualenv_user | default('root') }}"
+##    packages: []
+##  - name: yq
+##    state: "{{ molecule_ansible8_state | default('present') }}"
+##    recreate: false
+##    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+##    site_packages: false
+##    user: "{{ molecule_virtualenv_user | default('root') }}"
+##    packages: []
 
 
 # list of all virtual environments
 molecule_venvs:
-  - name: ansible7
-    state: "{{ molecule_ansible7_state | default('present') }}"
-    python: "{{ molecule_ansible7_python | default('/usr/bin/python3') }}"
-    site_packages: false
-    user: "{{ molecule_virtualenv_user | default('root') }}"
-    packages:
-      - "ansible>=7,<8"
-      - docker
-      - docker-compose
-      - lxml
-      - dnspython
-      - jmespath
-      - netaddr
-      - requests
-  - name: ansible8
+  - name: docker-compose
     state: "{{ molecule_ansible8_state | default('present') }}"
     recreate: false
     python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
     site_packages: false
     user: "{{ molecule_virtualenv_user | default('root') }}"
     packages:
-      - "ansible>=8,<9"
-      - docker
-      - docker-compose
-      - lxml
-      - dnspython
-      - jmespath
-      - netaddr
-      - requests
-  - name: ansible-lint
-    state: "{{ molecule_ansible8_state | default('present') }}"
-    recreate: false
-    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
-    site_packages: false
-    user: "{{ molecule_virtualenv_user | default('root') }}"
-    packages:
-      - ansible-lint
-  - name: molecule
-    state: "{{ molecule_ansible8_state | default('present') }}"
-    recreate: false
-    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
-    site_packages: false
-    user: "{{ molecule_virtualenv_user | default('root') }}"
-    packages:
-      - "molecule<5"
-      # - molecule-docker
-      - "ansible-compat<4"
-  - name: e2j2
-    state: "{{ molecule_ansible8_state | default('present') }}"
-    recreate: false
-    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
-    site_packages: false
-    user: "{{ molecule_virtualenv_user | default('root') }}"
-    packages:
-      - e2j2
-      - jinja2-ansible-filters
-  - name: yq
-    state: "{{ molecule_ansible8_state | default('present') }}"
-    recreate: false
-    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
-    site_packages: false
-    user: "{{ molecule_virtualenv_user | default('root') }}"
-    packages:
-      - yq
+      - "docker<7"
+      - "docker-compose"
+##  - name: ansible8
+##    state: "{{ molecule_ansible8_state | default('present') }}"
+##    recreate: false
+##    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+##    site_packages: false
+##    user: "{{ molecule_virtualenv_user | default('root') }}"
+##    packages:
+##      - "ansible>=8,<9"
+##      # - "ansible-compat<4"
+##      - ansible-lint
+##      - "molecule<5"
+##      - docker
+##      - docker-compose
+##      - lxml
+##      - dnspython
+##      - jmespath
+##      - netaddr
+##      - requests
+##  - name: ansible9
+##    state: "{{ molecule_ansible9_state | default('present') }}"
+##    recreate: false
+##    python: "{{ molecule_ansible9_python | default('/usr/bin/python3') }}"
+##    site_packages: false
+##    user: "{{ molecule_virtualenv_user | default('root') }}"
+##    packages:
+##      - "ansible>=9,<10"
+##      # - "ansible-compat<4"
+##      - ansible-lint
+##      - "molecule<5"
+##      - docker
+##      - docker-compose
+##      - lxml
+##      - dnspython
+##      - jmespath
+##      - netaddr
+##      - requests
+##  - name: e2j2
+##    state: "{{ molecule_ansible8_state | default('present') }}"
+##    recreate: false
+##    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+##    site_packages: false
+##    user: "{{ molecule_virtualenv_user | default('root') }}"
+##    packages:
+##      - e2j2
+##      - jinja2-ansible-filters
+##  - name: yq
+##    state: "{{ molecule_ansible8_state | default('present') }}"
+##    recreate: false
+##    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+##    site_packages: false
+##    user: "{{ molecule_virtualenv_user | default('root') }}"
+##    packages:
+##      - yq
 
 # List of direct links or indirect via wrapper
 molecule_links:
-  - { link: /usr/local/bin/ansible7, cmd: /usr/local/venv/ansible7/bin/ansible, direct: true }
+#  - { link: /usr/local/bin/ansible7, cmd: /usr/local/venv/ansible7/bin/ansible, direct: true }
   - { link: /usr/local/bin/ansible8, cmd: /usr/local/venv/ansible8/bin/ansible, direct: true }
-  - { link: /usr/local/bin/molecule, cmd: /usr/local/venv/molecule/bin/molecule, direct: false }
-  - { link: /usr/local/bin/ansible, cmd: /usr/local/venv/molecule/bin/ansible, direct: true }
-  - { link: /usr/local/bin/ansible-galaxy, cmd: /usr/local/venv/molecule/bin/ansible-galaxy, direct: true }
-  - { link: /usr/local/bin/ansible-playbook, cmd: /usr/local/venv/molecule/bin/ansible-playbook, direct: true }
-  - { link: /usr/local/bin/ansible-lint, cmd: /usr/local/venv/ansible-lint/bin/ansible-lint, direct: false }
-  - { link: /usr/local/bin/yamllint, cmd: /usr/local/venv/ansible-lint/bin/yamllint, direct: true }
+  - { link: /usr/local/bin/ansible9, cmd: /usr/local/venv/ansible9/bin/ansible, direct: true }
+  - { link: /usr/local/bin/molecule, cmd: /usr/local/venv/ansible9/bin/molecule, direct: false }
+  - { link: /usr/local/bin/ansible, cmd: /usr/local/venv/ansible9/bin/ansible, direct: true }
+  - { link: /usr/local/bin/ansible-galaxy, cmd: /usr/local/venv/ansible9/bin/ansible-galaxy, direct: true }
+  - { link: /usr/local/bin/ansible-playbook, cmd: /usr/local/venv/ansible9/bin/ansible-playbook, direct: true }
+  - { link: /usr/local/bin/ansible-lint, cmd: /usr/local/venv/ansible9/bin/ansible-lint, direct: false }
+  - { link: /usr/local/bin/yamllint, cmd: /usr/local/venv/ansible9/bin/yamllint, direct: true }
   - { link: /usr/local/bin/e2j2, cmd: /usr/local/venv/e2j2/bin/e2j2, direct: true }
   - { link: /usr/local/bin/yq, cmd: /usr/local/venv/yq/bin/yq, direct: true }
+  - { link: /usr/local/bin/docker-compose, cmd: /usr/local/venv/docker-compose/bin/docker-compose, direct: true }
+</pre></code>
+
+### defaults/Ubuntu-20.yml
+<pre><code>
+# Install python 3.9
+molecule_python39: true
+
+# Python executable to use
+molecule_ansible7_python: /usr/bin/python3.9
+molecule_ansible8_python: /usr/bin/python3.9
+</pre></code>
+
+### defaults/family-RedHat-7.yml
+<pre><code>
+# Ansible version not supported
+molecule_ansible5_state: skip
+molecule_ansible6_state: skip
+molecule_ansible7_state: skip
 </pre></code>
 
 ### defaults/family-RedHat-8.yml
@@ -195,24 +207,6 @@ molecule_python311: true
 # Python executable to use
 molecule_ansible7_python: /usr/bin/python3.11
 molecule_ansible8_python: /usr/bin/python3.11
-</pre></code>
-
-### defaults/family-RedHat-7.yml
-<pre><code>
-# Ansible version not supported
-molecule_ansible5_state: skip
-molecule_ansible6_state: skip
-molecule_ansible7_state: skip
-</pre></code>
-
-### defaults/Ubuntu-20.yml
-<pre><code>
-# Install python 3.9
-molecule_python39: true
-
-# Python executable to use
-molecule_ansible7_python: /usr/bin/python3.9
-molecule_ansible8_python: /usr/bin/python3.9
 </pre></code>
 
 
