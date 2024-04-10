@@ -241,7 +241,6 @@ for Role in $Roles
 do
   Clean_role
 done
-exit
 
 # Delete other roles
 Roles=$(ls -d ${Path}roles/deitkrachten.* 2>/dev/null | sed "s/roles\///")

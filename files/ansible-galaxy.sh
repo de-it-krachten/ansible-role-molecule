@@ -105,7 +105,8 @@ function Get_roles
     exit ${Exit:-1}
   fi
 
-  [[ $Refresh == true || $Clean == true ]] && ${DIRNAME}/ansible-requirements-clean.sh -p ${Path} ${Clean_args} ${Reqfile}
+  [[ -n $Path ]] && Args="-p ${Path}" || Args=
+  [[ $Clean == true ]] && ${DIRNAME}/ansible-requirements-clean.sh ${Args} ${Clean_args} ${Reqfile}
   [[ $Clean_only == true ]] && exit 0
 
   $Echo ansible-galaxy install -r $Reqfile -p ${Path}roles --ignore-errors
@@ -152,7 +153,7 @@ Collections_yaml=collections/requirements.yml
 Roles_yaml=roles/requirements.yml
 
 # parse command line into arguments and check results of parsing
-while getopts :cCdDGhop:qr-: OPT
+while getopts :cCdDGhop:qrv-: OPT
 do
 
   # Support long options
@@ -200,6 +201,7 @@ do
       ;;
     r|refresh)
       Refresh=true
+      Clean=true
       ;;
     v|verbose)
       Verbose=true
