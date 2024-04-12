@@ -1,3 +1,10 @@
+## [1.6.2](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.6.1...v1.6.2) (2024-04-12)
+
+
+### Bug Fixes
+
+* Update scripts ([67b3520](https://github.com/de-it-krachten/ansible-role-molecule/commit/67b35207ef22641845c0354fc431b033e694d17c))
+
 ## [1.6.1](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.6.0...v1.6.1) (2023-11-11)
 
 
