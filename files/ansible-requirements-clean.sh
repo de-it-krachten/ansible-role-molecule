@@ -104,27 +104,27 @@ EOF
 function Clean_role
 {
 
-  if [[ -e roles/$Role ]]
+  if [[ -e ${Path}roles/$Role ]]
   then
-    if [[ -L roles/$Role ]]
+    if [[ -L ${Path}roles/$Role ]]
     then
-      [[ $Verbose_level -gt 0 ]] && echo "Leaving symbolic link 'roles/$Role'" >&2
+      [[ $Verbose_level -gt 0 ]] && echo "Leaving symbolic link '${Path}roles/$Role'" >&2
       return 0
-    elif [[ -d roles/$Role/.git ]]
+    elif [[ -d ${Path}roles/$Role/.git ]]
     then
       if [[ $Force == true ]]
       then
-        $Echo rm -fr roles/$Role
+        $Echo rm -fr ${Path}roles/$Role
       else
-        [[ $Verbose_level -gt 0 ]] && echo "Leaving repository 'roles/$Role' due to presence of .git directory" >&2
+        [[ $Verbose_level -gt 0 ]] && echo "Leaving repository '${Path}roles/$Role' due to presence of .git directory" >&2
       fi
-    elif [[ -d roles/$Role ]]
+    elif [[ -d ${Path}roles/$Role ]]
     then
-      [[ $Verbose_level -gt 0 ]] && echo "Removing 'role/$Role'" >&2
-      $Echo rm -fr roles/$Role
+      [[ $Verbose_level -gt 0 ]] && echo "Removing '${Path}role/$Role'" >&2
+      $Echo rm -fr ${Path}roles/$Role
     fi
   else
-    [[ $Verbose_level -gt 0 ]] && echo "Role '$Role' not found"
+    [[ $Verbose_level -gt 0 ]] && echo "Role '${Path}${Role}' not found"
   fi
 
   # Update .gitignore to exclude external roles
@@ -155,7 +155,6 @@ Force=false
 Echo=
 Gitignore=false
 Ansible_lint=false
-Path=$PWD
 
 # parse command line into arguments and check results of parsing
 while getopts :aAdDFgGhp:qv-: OPT
@@ -221,8 +220,8 @@ do
 done
 shift $(($OPTIND -1))
 
-# Switch to the ansible location
-[[ $Path != $PWD ]] && cd $Path
+# Use custom path
+[[ -n $Path ]] && Path="${Path}/"
 
 # parameters
 Reqfile=${1:-roles/requirements.yml}
@@ -244,12 +243,11 @@ do
 done
 
 # Delete other roles
-Roles=$(ls -d roles/deitkrachten.* 2>/dev/null | sed "s/roles\///")
+Roles=$(ls -d ${Path}roles/deitkrachten.* 2>/dev/null | sed "s/roles\///")
 for Role in $Roles
 do
   Clean_role
 done
-
 
 # Update .gitignore to exclude external roles
 #[[ $Dry_run == false && $Gitignore == true ]] && Gitignore

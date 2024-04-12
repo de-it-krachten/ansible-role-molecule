@@ -117,13 +117,14 @@ Flags :
    -C          : Disable colors in output
    -e <file>   : File with extra vars to use
    -k          : Do not destroy the container
-   -K          : 
-   -L          : Disable logging to file 
+   -K          :
+   -L          : Disable logging to file
    -m <mode>   : Molecule phase to execute (default=test)
-   -p          : Execute dependency phase before test (default)
+   -p          : Execute dependency phase before test
                  Useful when depending on custom tasks from other roles (e.g. lint)
-   -P          : Do NOT run the dependency phase before test
+#   -P          : Do NOT run the dependency phase before test
    -r <driver> : Molecule driver to use (default=docker)
+   -R <provider> : backend provider for vagrant (virtualbox,libvirt default=virtualbox)
    -s <names>  : Scenario(s) to execute (divided by comma's)
    -S          : Skip setup
    -W          : Wait for 900 seconds after failure
@@ -197,7 +198,6 @@ function Shell
 
 }
 
-
 function Setup
 {
 
@@ -223,7 +223,7 @@ function Setup
 function Molecule2
 {
 
-  Molecule_test=$(yq -r .lint.name molecule/default/molecule.yml 2>/dev/null)
+  Molecule_test=$(yq -r .lint.name molecule/$Scenario/molecule.yml 2>/dev/null)
   if [[ -n $Molecule_test ]]
   then
     printf "%80s\n" | tr ' ' "#"
@@ -245,7 +245,7 @@ function Install_pip
   fi
 
 }
-  
+
 function Executable_test
 {
 
@@ -297,8 +297,8 @@ function Fail_on_deprecation_warning
     echo "#############################################################" >&2
     cat ${TMPFILE}dep1 >&2
 
-    if [[ -n $Wait_after_error ]] 
-    then 
+    if [[ -n $Wait_after_error ]]
+    then
       echo "Waiting for '$Wait_after_error' seconds"
       sleep $Wait_after_error
     fi
@@ -343,22 +343,13 @@ function Fail_on_warning
 function Fix_requirements
 {
 
-  if [[ -z $CI_JOB_TOKEN ]]
+  local reqfile=$1
+
+  if [[ ! -f $reqfile ]]
   then
-    echo "No variable 'CI_JOB_TOKEN' defined!" >&2
+    [[ $Verbose == true ]] && echo "Requirements file '$reqfile' not found!" >&2
     return 1
   fi
-
-#  if [[ -f roles/requirements.yml ]]
-#  then
-#    [[ ! -f roles/requirements.yml.org ]] && cp roles/requirements.yml roles/requirements.yml.org
-#    sed -i -r "s|git@([a-zA-Z0-9\.\-\_]*):(.*)|https://gitlab-ci-token:$CI_JOB_TOKEN@\\1/\\2|" roles/requirements.yml
-#  fi
-
-}
-
-function Fix_requirements_role
-{
 
   if [[ -z $CI_JOB_TOKEN ]]
   then
@@ -366,11 +357,9 @@ function Fix_requirements_role
     return 1
   fi
 
-  if [[ -f molecule/$Scenario/requirements.yml ]]
-  then
-    [[ ! -f molecule/$Scenario/requirements.yml.org ]] && cp molecule/$Scenario/requirements.yml molecule/$Scenario/requirements.yml.org
-    sed -i -r "s|git@([a-zA-Z0-9\.\-\_]*):(.*)|https://gitlab-ci-token:$CI_JOB_TOKEN@\\1/\\2|" molecule/$Scenario/requirements.yml
-  fi
+  echo "Converting $reqfile from ssh -> https"
+  [[ ! -f ${reqfile}.org ]] && cp ${reqfile} ${reqfile}.org
+  sed -i -r "s|git@([a-zA-Z0-9\.\-\_]*):(.*)|https://gitlab-ci-token:$CI_JOB_TOKEN@\\1/\\2|" ${reqfile}
 
 }
 
@@ -522,18 +511,19 @@ function Render_molecule_yaml
     echo "No file 'molecule/${Scenario}/.molecule-platform-${Driver}.yml' found!!!" >&2
   fi
 
-  printf "%80s\n" | tr ' ' '@' 
+  printf "%80s\n" | tr ' ' '@'
   echo "scenario               = ${Scenario}"
   echo "driver                 = ${Driver}"
+  echo "provider               = ${Provider:-'N/A'}"
   echo "molecule file          = $Molecule_file"
   echo "molecule platform file = $Molecule_platforms_file"
-  printf "%80s\n" | tr ' ' '@' 
+  printf "%80s\n" | tr ' ' '@'
 
   # Create molecule.yml from template
   if [[ -f $Molecule_file ]]
   then
 
-    # Create JSON with all distributions we want 
+    # Create JSON with all distributions we want
     [[ $Molecule_distributions == ALL ]] && Molecule_distributions=$(echo $(yq -r '.[] | select(.ci==true) | .name' $Molecule_platforms_file))
     Distros=$(echo $Molecule_distributions | sed "s/,/ /g;s/ /|/g")
     Distros_json=$(yq -cj '. | map(select(.name|test("^('$Distros')$")))' $Molecule_platforms_file)
@@ -621,8 +611,8 @@ Destroy_and_setup=false
 Fail_on_deprecation_warning=false
 Fail_on_warning=false
 Scenarios=default
+Scenario=default
 Modes=test
-#Pre_dependency=true
 Pre_dependency=false
 Verbose_level=0
 Log=true
@@ -637,7 +627,7 @@ Shell=false
 [[ `id -un` != root ]] && Sudo=sudo
 
 # parse command line into arguments and check results of parsing
-while getopts :Ac:Cde:DhkKLm:pPr:s:SvWxXyYzZ:-: OPT
+while getopts :Ac:Cde:DhkKLm:pPr:R:s:SvWxXyYzZ:-: OPT
 do
 
   # Support long options
@@ -680,6 +670,9 @@ do
      P) Pre_dependency=false
         ;;
      r) Driver=$OPTARG
+        ;;
+     R) Provider=$OPTARG
+        export VAGRANT_DEFAULT_PROVIDER=$Provider
         ;;
      s) Scenarios=`echo $OPTARG | sed "s/,/ /g"`
         ;;
@@ -749,9 +742,12 @@ Patch_ansible29
 # destro, create and test without destroy
 if [[ $Destroy_and_setup == true ]]
 then
-  ${DIRNAME1}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -m destroy -Z "${Molecule_distributions}" $Verbose1
-  ${DIRNAME1}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -m create -Z "${Molecule_distributions}" $Verbose1 || exit $?
-  ${DIRNAME1}/${BASENAME} ${Debug1} ${Verbose1} -r $Driver -L -k -Z "${Molecule_distributions}" $Verbose1 || exit $?
+  Args="${Debug1} ${Verbose1} -L"
+  [[ -n $Driver ]] && Args="$Args -r $Driver"
+  [[ -n $Provider ]] && Args="$Args -R $Provider"
+  ${DIRNAME1}/${BASENAME} ${Args} -m destroy -Z "${Molecule_distributions}"
+  ${DIRNAME1}/${BASENAME} ${Args} -m create -Z "${Molecule_distributions}" || exit $?
+  ${DIRNAME1}/${BASENAME} ${Args} -k -Z "${Molecule_distributions}" || exit $?
   exit 0
 fi
 
@@ -790,7 +786,7 @@ else
 fi
 
 # Fix requirement.yml (git/pubkey --> https/token)
-Fix_requirements
+Fix_requirements roles/requirements.yml
 
 # Loop through all roles
 for Role in $Roles
@@ -804,9 +800,6 @@ do
   # Make sure molecule configuration is >= v3
   Molecule2
 
-  # Fix requirement.yml (git/pubkey --> https/token)
-  Fix_requirements_role
-
   # Execute dependency phase
   [[ $Pre_dependency == true ]] && molecule dependency --scenario-name=$Scenario
 
@@ -816,6 +809,9 @@ do
 
     # Display scenario
     echo "Proccessing scenario '$Scenario'"
+
+    # Fix requirement.yml (git/pubkey --> https/token)
+    Fix_requirements molecule/$Scenario/requirements.yml
 
     # Substitute scenario name
     eval Molecule_yaml=$MOLECULE_YAML
