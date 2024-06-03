@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.6.2...v1.7.0) (2024-06-03)
+
+
+### Features
+
+* Add support for Ubuntu 24.04 LTS + Fedora 40 ([c44d453](https://github.com/de-it-krachten/ansible-role-molecule/commit/c44d453ddb95b32fad67cc5dc580aad9a8095f65))
+
 ## [1.6.2](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.6.1...v1.6.2) (2024-04-12)
 
 
