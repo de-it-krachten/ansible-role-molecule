@@ -72,13 +72,25 @@
   ci: true
   box: generic/ubuntu2204
   interfaces: [{'network_name': 'private_network', 'type': 'dhcp'}]
-- name: fedora37
+- name: ubuntu2404
   ci: true
+  box: generic/ubuntu2404
+  interfaces: [{'network_name': 'private_network', 'type': 'dhcp'}]
+- name: fedora37
+  ci: false
   box: generic/fedora37
   interfaces: [{'network_name': 'private_network', 'type': 'dhcp'}]
 - name: fedora38
-  ci: true
+  ci: false
   box: generic/fedora38
+  interfaces: [{'network_name': 'private_network', 'type': 'dhcp'}]
+- name: fedora39
+  ci: true
+  box: generic/fedora39
+  interfaces: [{'network_name': 'private_network', 'type': 'dhcp'}]
+- name: fedora40
+  ci: true
+  box: generic/fedora40
   interfaces: [{'network_name': 'private_network', 'type': 'dhcp'}]
 - name: alpine3
   ci: false

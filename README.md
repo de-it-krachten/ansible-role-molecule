@@ -32,8 +32,9 @@ Supported platforms
 - Debian 12 (Bookworm)
 - Ubuntu 20.04 LTS
 - Ubuntu 22.04 LTS
-- Fedora 37
-- Fedora 38
+- Ubuntu 24.04 LTS
+- Fedora 39
+- Fedora 40
 
 Note:
 <sup>1</sup> : no automated testing is performed on these platforms
@@ -165,7 +166,7 @@ molecule_venvs:
 
 # List of direct links or indirect via wrapper
 molecule_links:
-#  - { link: /usr/local/bin/ansible7, cmd: /usr/local/venv/ansible7/bin/ansible, direct: true }
+  # - { link: /usr/local/bin/ansible7, cmd: /usr/local/venv/ansible7/bin/ansible, direct: true }
   - { link: /usr/local/bin/ansible8, cmd: /usr/local/venv/ansible8/bin/ansible, direct: true }
   - { link: /usr/local/bin/ansible9, cmd: /usr/local/venv/ansible9/bin/ansible, direct: true }
   - { link: /usr/local/bin/molecule, cmd: /usr/local/venv/ansible9/bin/molecule, direct: false }
@@ -177,16 +178,6 @@ molecule_links:
   - { link: /usr/local/bin/e2j2, cmd: /usr/local/venv/e2j2/bin/e2j2, direct: true }
   - { link: /usr/local/bin/yq, cmd: /usr/local/venv/yq/bin/yq, direct: true }
   - { link: /usr/local/bin/docker-compose, cmd: /usr/local/venv/docker-compose/bin/docker-compose, direct: true }
-</pre></code>
-
-### defaults/Ubuntu-20.yml
-<pre><code>
-# Install python 3.9
-molecule_python39: true
-
-# Python executable to use
-molecule_ansible7_python: /usr/bin/python3.9
-molecule_ansible8_python: /usr/bin/python3.9
 </pre></code>
 
 ### defaults/family-RedHat-7.yml
@@ -207,6 +198,16 @@ molecule_python311: true
 # Python executable to use
 molecule_ansible7_python: /usr/bin/python3.11
 molecule_ansible8_python: /usr/bin/python3.11
+</pre></code>
+
+### defaults/Ubuntu-20.yml
+<pre><code>
+# Install python 3.9
+molecule_python39: true
+
+# Python executable to use
+molecule_ansible7_python: /usr/bin/python3.9
+molecule_ansible8_python: /usr/bin/python3.9
 </pre></code>
 
 
