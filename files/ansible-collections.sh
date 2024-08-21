@@ -64,15 +64,11 @@ HOSTNAME=$(hostname -s)
 #
 #############################################################
 
-FUNCTIONS=${DIRNAME}/functions.sh
-if [[ -f ${FUNCTIONS} ]]
-then
-   . ${FUNCTIONS}
-#else
-#   echo "Functions file '${FUNCTIONS}' could not be found!" >&2
-#   exit 1
-fi
-
+FUNCTIONS="${DIRNAME}/functions.sh ${DIRNAME}/functions_ansible.sh"
+for functions in $FUNCTIONS
+do
+  [[ -f ${functions} ]] && . ${functions}
+done
 
 ##############################################################
 #
@@ -171,6 +167,9 @@ do
 
 done
 shift $(($OPTIND -1))
+
+# For specific ansible versions, fallback onto old Galaxy
+Galaxy_legacy
 
 # Write all generic requirements
 cat <<EOF >${TMPFILE}base
