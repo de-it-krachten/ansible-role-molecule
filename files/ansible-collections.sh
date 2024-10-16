@@ -215,19 +215,24 @@ EOF
 else
   echo "Creating jinja template (v2)"
   export collections="json:$Collections"
+  export ansible_version=$__ansible_version
   cat <<EOF > ${TMPFILE}.j2
 ---
 {% if collections | length > 0 %}
 collections:
 {% for collection in collections %}
+{% if collection != 'ansible.builtin' %}
 {% if collection | type_debug == 'dict' %}
+{% if not ansible_version | regex_search('^(2\.9)$') %}
 - {{ collection }}
+{% endif %}
 {% else %}
 {% set name = (collection | regex_replace(':.*')) %}
 {% set version = (collection | regex_replace('.*:')) %}
 - name: {{ name }}
 {% if version != collection %}
   version: {{ version }}
+{% endif %}
 {% endif %}
 {% endif %}
 {% endfor %}
@@ -243,7 +248,7 @@ if $E2J2 -f ${TMPFILE}.j2 >/dev/null 2>&1
 then
   yq -y . ${TMPFILE} > ${TMPFILE}.yml
 else
-  cat ${TMPFILE}.err
+  cat ${TMPFILE}.err >&2
   exit 1
 fi
 

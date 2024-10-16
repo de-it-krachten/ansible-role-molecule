@@ -137,8 +137,8 @@ function Galaxy_legacy
 {
 
   # Fall back onto old galaxy
-  __ansible_version=$(ansible --version | awk '/core/ {print $NF}' | cut -f1,2 -d.)
-  if [[ $__ansible_version == 2.11 ]]
+  __ansible_version=$(ansible --version | awk 'NR==1' | awk '{print $NF}' | cut -f1,2 -d.)
+  if [[ $__ansible_version =~ ^2\.(9|10|11) ]]
   then
 
     TMPFILE=${TMPFILE:-`mktemp`}
