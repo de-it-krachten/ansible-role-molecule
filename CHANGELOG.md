@@ -1,3 +1,11 @@
+## [1.7.1](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.7.0...v1.7.1) (2024-10-18)
+
+
+### Bug Fixes
+
+* Add support for fallback to old Galaxy server on specific ansible versions ([bc5b1bd](https://github.com/de-it-krachten/ansible-role-molecule/commit/bc5b1bdd5de2aaed0781f34883160cc869b07c66))
+* Fix issues with ansible-galaxy scripts ([294a6d3](https://github.com/de-it-krachten/ansible-role-molecule/commit/294a6d392942e57efac41c8accd995781c638e71))
+
 # [1.7.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.6.2...v1.7.0) (2024-06-03)
 
 
