@@ -78,14 +78,11 @@ export MOLECULE_DISTRO
 #
 #############################################################
 
-#FUNCTIONS=${DIRNAME}/functions.sh
-#if [[ -f ${FUNCTIONS} ]]
-#then
-#   . ${FUNCTIONS}
-#else
-#   echo "Functions file '${FUNCTIONS}' could not be found!" >&2
-#   exit 1
-#fi
+FUNCTIONS="${DIRNAME}/functions.sh ${DIRNAME}/functions_ansible.sh"
+for functions in $FUNCTIONS
+do
+  [[ -f ${functions} ]] && . ${functions}
+done
 
 
 ##############################################################
@@ -130,7 +127,7 @@ Flags :
    -W          : Wait for 900 seconds after failure
    -x          : Fail if deprecation warning is found
    -X          : Fail if warning is found (non-deprecation)
-   -z          : Set of default distributions (ubuntu2004,debian11,rockylinux8,fedora38)"
+   -z          : Set of default distributions (ubuntu2404,debian12,rockylinux8,fedora40)"
    -Z <x,y>    : Distributions to test
 
 Examples:
@@ -622,12 +619,13 @@ Setup=true
 Driver=${MOLECULE_DRIVER:-docker}
 Allow_platforms_not_found=false
 Shell=false
+Use_old_galaxy=false
 
 # Sudo command for non-root
 [[ `id -un` != root ]] && Sudo=sudo
 
 # parse command line into arguments and check results of parsing
-while getopts :Ac:Cde:DhkKLm:pPr:R:s:SvWxXyYzZ:-: OPT
+while getopts :Ac:Cde:DhGkKLm:pPr:R:s:SvWxXyYzZ:-: OPT
 do
 
   # Support long options
@@ -652,6 +650,8 @@ do
         Verbose=true
         ;;
      e) Vars_file="$OPTARG"
+        ;;
+     G) Use_old_galaxy=true
         ;;
      h|help)
         Usage
@@ -697,7 +697,7 @@ do
      Y|shell)
         Shell=true
         ;;
-     z) Molecule_distributions="ubuntu2004,debian11,rockylinux8,fedora38"
+     z) Molecule_distributions="ubuntu2404,debian12,rockylinux8,fedora40"
         ;;
      Z) Molecule_distributions=$(echo $Molecule_distributions $OPTARG)
         ;;
@@ -729,6 +729,9 @@ then
   fi
   export MOLECULE_ANSIBLE_ARGS="json:[\"--extra-vars=@${Vars_file}\"]"
 fi
+
+# Fall back onto old galaxy
+Galaxy_legacy
 
 # Molecule_distributions: fallback onto '$MOLECULE_DISTRO'
 Molecule_distributions=${Molecule_distributions:-${MOLECULE_DISTRO}}

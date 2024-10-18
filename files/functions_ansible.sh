@@ -40,13 +40,13 @@ function Yamlloop
   # Now search for all role dependencies
   for Role in `cat ${TMPFILE}1`
   do
-    if [[ -f roles/$Role/meta/requirements.yml ]]
+    if [[ -f ${Path}roles/$Role/meta/requirements.yml ]]
     then
-      Requirements_yaml roles/$Role/meta/requirements.yml > ${TMPFILE}2
+      Requirements_yaml ${Path}roles/$Role/meta/requirements.yml > ${TMPFILE}2
     fi
   done
 
-  # Display a lit of all unique role names
+  # Display a list of all unique role names
   cat ${TMPFILE}1 ${TMPFILE}2 2>/dev/null | sort -u
 
 }
@@ -123,3 +123,32 @@ function Ansible_type
   fi
 
 }
+
+function Dependencies
+{
+
+  echo -e "---\ncollections:\n  - community.docker" > ${TMPFILE}
+  [[ -f .collections ]] && yq -y . .collections | grep "^  - " >> ${TMPFILE}
+  ansible-galaxy collection install -r ${TMPFILE}
+
+}
+
+function Galaxy_legacy
+{
+
+  # Fall back onto old galaxy
+  __ansible_version=$(ansible --version | awk 'NR==1' | awk '{print $NF}' | cut -f1,2 -d.)
+  if [[ $__ansible_version =~ ^2\.(9|10|11) ]]
+  then
+
+    TMPFILE=${TMPFILE:-`mktemp`}
+
+    echo "*** Falling back onto old Galaxy server ***"
+    echo -e "[galaxy]\nserver = https://old-galaxy.ansible.com/\n" > ${TMPFILE}ansible.cfg
+
+    export ANSIBLE_CONFIG=${TMPFILE}ansible.cfg
+
+  fi
+
+}
+
