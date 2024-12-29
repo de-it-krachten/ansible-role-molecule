@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.7.1...v1.8.0) (2024-12-29)
+
+
+### Features
+
+* Update supported platforms & CI ([b66a4dd](https://github.com/de-it-krachten/ansible-role-molecule/commit/b66a4dd71e3b02d21cc47fca1175ce772fa417a7))
+
 ## [1.7.1](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.7.0...v1.7.1) (2024-10-18)
 
 
