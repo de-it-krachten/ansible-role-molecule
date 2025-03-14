@@ -37,10 +37,10 @@
   ci: true
   image: docker.io/geerlingguy/docker-rockylinux9-ansible:latest
 - name: oraclelinux8
-  ci: true
+  ci: false
   image: docker.io/dropveter/oraclelinux8-ansible
 - name: oraclelinux9
-  ci: true
+  ci: false
   image: docker.io/dropveter/oraclelinux9-ansible
 - name: almalinux8
   ci: true
@@ -58,16 +58,16 @@
   ci: false
   image: docker.io/geerlingguy/docker-debian10-ansible:latest
 - name: debian11
-  ci: true
+  ci: false
   image: docker.io/geerlingguy/docker-debian11-ansible:latest
 - name: debian12
-  ci: true
+  ci: false
   image: docker.io/geerlingguy/docker-debian12-ansible:latest
 - name: ubuntu1804
   ci: false
   image: docker.io/geerlingguy/docker-ubuntu1804-ansible:latest
 - name: ubuntu2004
-  ci: true
+  ci: false
   image: docker.io/geerlingguy/docker-ubuntu2004-ansible:latest
   privileged: true
   pre_build_image: true
@@ -89,10 +89,10 @@
   ci: false
   image: docker.io/geerlingguy/docker-fedora39-ansible:latest
 - name: fedora40
-  ci: true
+  ci: false
   image: docker.io/geerlingguy/docker-fedora40-ansible:latest
 - name: fedora41
-  ci: true
+  ci: false
   image: docker.io/geerlingguy/docker-fedora41-ansible:latest
 - name: alpine3
   ci: false
