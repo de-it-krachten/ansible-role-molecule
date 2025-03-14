@@ -54,6 +54,7 @@ molecule_venv_root: /usr/local/venv
 # Install python 3.8 / 3.9
 molecule_python38: false
 molecule_python39: false
+molecule_python311: true
 
 # list of OS packages required
 molecule_os_packages:
@@ -61,120 +62,59 @@ molecule_os_packages:
   - git
 
 # list of all virtual environments
-molecule_venvs_empty:
-  - name: docker-compose
-    state: "{{ molecule_ansible8_state | default('present') }}"
-    recreate: false
-    user: "{{ molecule_virtualenv_user | default('root') }}"
-    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
-    site_packages: false
-    packages: []
-##  - name: ansible8
-##    state: "{{ molecule_ansible8_state | default('present') }}"
-##    recreate: false
-##    user: "{{ molecule_virtualenv_user | default('root') }}"
-##    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
-##    site_packages: false
-##    packages: []
-##  - name: ansible9
-##    state: "{{ molecule_ansible9_state | default('present') }}"
-##    recreate: false
-##    user: "{{ molecule_virtualenv_user | default('root') }}"
-##    python: "{{ molecule_ansible9_python | default('/usr/bin/python3') }}"
-##    site_packages: false
-##    packages: []
-##  - name: e2j2
-##    state: "{{ molecule_ansible8_state | default('present') }}"
-##    recreate: false
-##    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
-##    site_packages: false
-##    user: "{{ molecule_virtualenv_user | default('root') }}"
-##    packages: []
-##  - name: yq
-##    state: "{{ molecule_ansible8_state | default('present') }}"
-##    recreate: false
-##    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
-##    site_packages: false
-##    user: "{{ molecule_virtualenv_user | default('root') }}"
-##    packages: []
-
-
-# list of all virtual environments
 molecule_venvs:
   - name: docker-compose
-    state: "{{ molecule_ansible8_state | default('present') }}"
+    state: present
     recreate: false
-    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
+    python: /usr/bin/python3.11
     site_packages: false
     user: "{{ molecule_virtualenv_user | default('root') }}"
     packages:
       - "docker<7"
       - "docker-compose"
-##  - name: ansible8
-##    state: "{{ molecule_ansible8_state | default('present') }}"
-##    recreate: false
-##    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
-##    site_packages: false
-##    user: "{{ molecule_virtualenv_user | default('root') }}"
-##    packages:
-##      - "ansible>=8,<9"
-##      # - "ansible-compat<4"
-##      - ansible-lint
-##      - "molecule<5"
-##      - docker
-##      - docker-compose
-##      - lxml
-##      - dnspython
-##      - jmespath
-##      - netaddr
-##      - requests
-##  - name: ansible9
-##    state: "{{ molecule_ansible9_state | default('present') }}"
-##    recreate: false
-##    python: "{{ molecule_ansible9_python | default('/usr/bin/python3') }}"
-##    site_packages: false
-##    user: "{{ molecule_virtualenv_user | default('root') }}"
-##    packages:
-##      - "ansible>=9,<10"
-##      # - "ansible-compat<4"
-##      - ansible-lint
-##      - "molecule<5"
-##      - docker
-##      - docker-compose
-##      - lxml
-##      - dnspython
-##      - jmespath
-##      - netaddr
-##      - requests
-##  - name: e2j2
-##    state: "{{ molecule_ansible8_state | default('present') }}"
-##    recreate: false
-##    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
-##    site_packages: false
-##    user: "{{ molecule_virtualenv_user | default('root') }}"
-##    packages:
-##      - e2j2
-##      - jinja2-ansible-filters
-##  - name: yq
-##    state: "{{ molecule_ansible8_state | default('present') }}"
-##    recreate: false
-##    python: "{{ molecule_ansible8_python | default('/usr/bin/python3') }}"
-##    site_packages: false
-##    user: "{{ molecule_virtualenv_user | default('root') }}"
-##    packages:
-##      - yq
+  - name: ansible11
+    state: present
+    recreate: false
+    python: /usr/bin/python3.11
+    site_packages: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
+    packages:
+      - "ansible>=11,<12"
+      - ansible-lint
+      - molecule
+      # - docker
+      # - docker-compose
+      - lxml
+      - dnspython
+      - jmespath
+      - netaddr
+      - requests
+  - name: e2j2
+    state: present
+    recreate: false
+    python: /usr/bin/python3.11
+    site_packages: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
+    packages:
+      - e2j2
+      - jinja2-ansible-filters
+  - name: yq
+    state: present
+    recreate: false
+    python: /usr/bin/python3.11
+    site_packages: false
+    user: "{{ molecule_virtualenv_user | default('root') }}"
+    packages:
+      - yq
 
 # List of direct links or indirect via wrapper
 molecule_links:
-  # - { link: /usr/local/bin/ansible7, cmd: /usr/local/venv/ansible7/bin/ansible, direct: true }
-  - { link: /usr/local/bin/ansible8, cmd: /usr/local/venv/ansible8/bin/ansible, direct: true }
-  - { link: /usr/local/bin/ansible9, cmd: /usr/local/venv/ansible9/bin/ansible, direct: true }
-  - { link: /usr/local/bin/molecule, cmd: /usr/local/venv/ansible9/bin/molecule, direct: false }
-  - { link: /usr/local/bin/ansible, cmd: /usr/local/venv/ansible9/bin/ansible, direct: true }
-  - { link: /usr/local/bin/ansible-galaxy, cmd: /usr/local/venv/ansible9/bin/ansible-galaxy, direct: true }
-  - { link: /usr/local/bin/ansible-playbook, cmd: /usr/local/venv/ansible9/bin/ansible-playbook, direct: true }
-  - { link: /usr/local/bin/ansible-lint, cmd: /usr/local/venv/ansible9/bin/ansible-lint, direct: false }
-  - { link: /usr/local/bin/yamllint, cmd: /usr/local/venv/ansible9/bin/yamllint, direct: true }
+  - { link: /usr/local/bin/molecule, cmd: /usr/local/venv/ansible11/bin/molecule, direct: false }
+  - { link: /usr/local/bin/ansible, cmd: /usr/local/venv/ansible11/bin/ansible, direct: true }
+  - { link: /usr/local/bin/ansible-galaxy, cmd: /usr/local/venv/ansible11/bin/ansible-galaxy, direct: true }
+  - { link: /usr/local/bin/ansible-playbook, cmd: /usr/local/venv/ansible11/bin/ansible-playbook, direct: true }
+  - { link: /usr/local/bin/ansible-lint, cmd: /usr/local/venv/ansible11/bin/ansible-lint, direct: false }
+  - { link: /usr/local/bin/yamllint, cmd: /usr/local/venv/ansible11/bin/yamllint, direct: true }
   - { link: /usr/local/bin/e2j2, cmd: /usr/local/venv/e2j2/bin/e2j2, direct: true }
   - { link: /usr/local/bin/yq, cmd: /usr/local/venv/yq/bin/yq, direct: true }
   - { link: /usr/local/bin/docker-compose, cmd: /usr/local/venv/docker-compose/bin/docker-compose, direct: true }
