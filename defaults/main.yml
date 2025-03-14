@@ -9,9 +9,7 @@ molecule_python_venv: true
 # base directory for all virtual environments
 molecule_venv_root: /usr/local/venv
 
-# Install python 3.8 / 3.9
-molecule_python38: false
-molecule_python39: false
+# Install python 3.11
 molecule_python311: true
 
 # list of OS packages required

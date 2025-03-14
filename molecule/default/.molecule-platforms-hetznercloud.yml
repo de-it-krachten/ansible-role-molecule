@@ -17,7 +17,7 @@
   server_type: cx11
   image: rocky-8
 - name: rockylinux9
-  ci: true
+  ci: false
   server_type: cx11
   image: rocky-9
 - name: debian10
@@ -25,11 +25,11 @@
   server_type: cx11
   image: debian-10
 - name: debian11
-  ci: true
+  ci: false
   server_type: cx11
   image: debian-11
 - name: debian12
-  ci: true
+  ci: false
   server_type: cx11
   image: debian-12
 - name: ubuntu1804
@@ -37,7 +37,7 @@
   server_type: cx11
   image: ubuntu-18.04
 - name: ubuntu2004
-  ci: true
+  ci: false
   server_type: cx11
   image: ubuntu-20.04
 - name: ubuntu2204
@@ -45,7 +45,7 @@
   server_type: cx11
   image: ubuntu-22.04
 - name: ubuntu2404
-  ci: true
+  ci: false
   server_type: cx11
   image: ubuntu-24.04
 - name: fedora37
@@ -61,10 +61,10 @@
   server_type: cx11
   image: fedora-39
 - name: fedora40
-  ci: true
+  ci: false
   server_type: cx11
   image: fedora-40
 - name: fedora41
-  ci: true
+  ci: false
   server_type: cx11
   image: fedora-41

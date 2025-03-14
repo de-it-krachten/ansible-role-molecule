@@ -18,7 +18,40 @@ platforms:
   rhel7:
     ci: false
     supported: false
+  rhel8:
+    ci: false
+    supported: true
+  rhel9:
+    ci: false
+    supported: false
   centos7:
+    ci: false
+    supported: false
+  centos8:
+    ci: false
+    supported: false
+  centos8s:
+    ci: false
+    supported: false
+  centos9s:
+    ci: false
+    supported: false
+  rockylinux8:
+    ci: true
+    supported: true
+  rockylinux9:
+    ci: false
+    supported: false
+  oraclelinux8:
+    ci: false
+    supported: false
+  oraclelinux9:
+    ci: false
+    supported: false
+  almalinux8:
+    ci: true
+    supported: true
+  almalinux9:
     ci: false
     supported: false
   opensuse15:
@@ -30,10 +63,35 @@ platforms:
   debian10:
     ci: false
     supported: false
+  debian11:
+    ci: false
+    supported: false
+  debian12:
+    ci: false
+    supported: false
   ubuntu1804:
     ci: false
     supported: false
+  ubuntu2004:
+    ci: false
+    supported: false
+#  ubuntu2204:
+#    ci: false
+#    supported: false
+  ubuntu2404:
+    ci: false
+    supported: false
+  fedora40:
+    ci: false
+    supported: false
+  fedora41:
+    ci: false
+    supported: false
+  alpine3:
+    ci: false
+    supported: false
 
+# Molecule
 molecule:
   prepare:
     vars:
@@ -46,8 +104,6 @@ molecule:
   converge:
     vars:
       molecule_python_install: true
-      python38: false
-      python39: true
       python311: true
     roles:
       - deitkrachten.python

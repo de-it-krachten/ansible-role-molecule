@@ -21,20 +21,9 @@ None
 Supported platforms
 
 - Red Hat Enterprise Linux 8<sup>1</sup>
-- Red Hat Enterprise Linux 9<sup>1</sup>
 - RockyLinux 8
-- RockyLinux 9
-- OracleLinux 8
-- OracleLinux 9
 - AlmaLinux 8
-- AlmaLinux 9
-- Debian 11 (Bullseye)
-- Debian 12 (Bookworm)
-- Ubuntu 20.04 LTS
 - Ubuntu 22.04 LTS
-- Ubuntu 24.04 LTS
-- Fedora 40
-- Fedora 41
 
 Note:
 <sup>1</sup> : no automated testing is performed on these platforms
@@ -51,9 +40,7 @@ molecule_python_venv: true
 # base directory for all virtual environments
 molecule_venv_root: /usr/local/venv
 
-# Install python 3.8 / 3.9
-molecule_python38: false
-molecule_python39: false
+# Install python 3.11
 molecule_python311: true
 
 # list of OS packages required
@@ -120,36 +107,6 @@ molecule_links:
   - { link: /usr/local/bin/docker-compose, cmd: /usr/local/venv/docker-compose/bin/docker-compose, direct: true }
 </pre></code>
 
-### defaults/family-RedHat-7.yml
-<pre><code>
-# Ansible version not supported
-molecule_ansible5_state: skip
-molecule_ansible6_state: skip
-molecule_ansible7_state: skip
-</pre></code>
-
-### defaults/family-RedHat-8.yml
-<pre><code>
-# Install python 3.8 / 3.9 / 3.11
-molecule_python38: false
-molecule_python39: false
-molecule_python311: true
-
-# Python executable to use
-molecule_ansible7_python: /usr/bin/python3.11
-molecule_ansible8_python: /usr/bin/python3.11
-</pre></code>
-
-### defaults/Ubuntu-20.yml
-<pre><code>
-# Install python 3.9
-molecule_python39: true
-
-# Python executable to use
-molecule_ansible7_python: /usr/bin/python3.9
-molecule_ansible8_python: /usr/bin/python3.9
-</pre></code>
-
 
 
 
@@ -161,8 +118,6 @@ molecule_ansible8_python: /usr/bin/python3.9
   become: 'yes'
   vars:
     molecule_python_install: true
-    python38: false
-    python39: true
     python311: true
   roles:
     - deitkrachten.python
