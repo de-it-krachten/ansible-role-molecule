@@ -1,3 +1,16 @@
+# [1.9.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.8.0...v1.9.0) (2025-03-15)
+
+
+### Bug Fixes
+
+* Add dedicated/temporary roles path ([692871b](https://github.com/de-it-krachten/ansible-role-molecule/commit/692871b0c1e0ebc34ee662fe183a666b49e5058a))
+* Update code for ansible11 ([b082e60](https://github.com/de-it-krachten/ansible-role-molecule/commit/b082e6095738c3fa2f3e0d90756d8e8573dd861f))
+
+
+### Features
+
+* Restrict supported platforms ([979a800](https://github.com/de-it-krachten/ansible-role-molecule/commit/979a800a25804e6bd27b82772af8d5b7dd75749c))
+
 # [1.8.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.7.1...v1.8.0) (2024-12-29)
 
 
