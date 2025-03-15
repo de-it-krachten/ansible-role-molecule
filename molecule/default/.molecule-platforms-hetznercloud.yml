@@ -17,7 +17,7 @@
   server_type: cx11
   image: rocky-8
 - name: rockylinux9
-  ci: false
+  ci: true
   server_type: cx11
   image: rocky-9
 - name: debian10
@@ -45,7 +45,7 @@
   server_type: cx11
   image: ubuntu-22.04
 - name: ubuntu2404
-  ci: false
+  ci: true
   server_type: cx11
   image: ubuntu-24.04
 - name: fedora37

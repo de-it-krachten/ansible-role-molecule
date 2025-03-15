@@ -1,0 +1,7 @@
+---
+
+# Install python 3.11
+molecule_python311: true
+
+# Python version to use
+molecule_python: /usr/bin/python3.11

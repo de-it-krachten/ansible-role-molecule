@@ -21,9 +21,13 @@ None
 Supported platforms
 
 - Red Hat Enterprise Linux 8<sup>1</sup>
+- Red Hat Enterprise Linux 9<sup>1</sup>
 - RockyLinux 8
+- RockyLinux 9
 - AlmaLinux 8
+- AlmaLinux 9
 - Ubuntu 22.04 LTS
+- Ubuntu 24.04 LTS
 
 Note:
 <sup>1</sup> : no automated testing is performed on these platforms
@@ -34,14 +38,14 @@ Note:
 # Should python be installed by this role
 molecule_python_install: false
 
+# Python version to use
+molecule_python: /usr/bin/python3
+
 # Should molecule virtual environments be created by this role
 molecule_python_venv: true
 
 # base directory for all virtual environments
 molecule_venv_root: /usr/local/venv
-
-# Install python 3.11
-molecule_python311: true
 
 # list of OS packages required
 molecule_os_packages:
@@ -53,7 +57,7 @@ molecule_venvs:
   - name: docker-compose
     state: present
     recreate: false
-    python: /usr/bin/python3.11
+    python: "{{ molecule_python }}"
     site_packages: false
     user: "{{ molecule_virtualenv_user | default('root') }}"
     packages:
@@ -62,7 +66,7 @@ molecule_venvs:
   - name: ansible11
     state: present
     recreate: false
-    python: /usr/bin/python3.11
+    python: "{{ molecule_python }}"
     site_packages: false
     user: "{{ molecule_virtualenv_user | default('root') }}"
     packages:
@@ -79,7 +83,7 @@ molecule_venvs:
   - name: e2j2
     state: present
     recreate: false
-    python: /usr/bin/python3.11
+    python: "{{ molecule_python }}"
     site_packages: false
     user: "{{ molecule_virtualenv_user | default('root') }}"
     packages:
@@ -88,7 +92,7 @@ molecule_venvs:
   - name: yq
     state: present
     recreate: false
-    python: /usr/bin/python3.11
+    python: "{{ molecule_python }}"
     site_packages: false
     user: "{{ molecule_virtualenv_user | default('root') }}"
     packages:
@@ -107,6 +111,24 @@ molecule_links:
   - { link: /usr/local/bin/docker-compose, cmd: /usr/local/venv/docker-compose/bin/docker-compose, direct: true }
 </pre></code>
 
+### defaults/family-RedHat-8.yml
+<pre><code>
+# Install python 3.11
+molecule_python311: true
+
+# Python version to use
+molecule_python: /usr/bin/python3.11
+</pre></code>
+
+### defaults/Ubuntu-22.yml
+<pre><code>
+# Install python 3.11
+molecule_python311: true
+
+# Python version to use
+molecule_python: /usr/bin/python3.11
+</pre></code>
+
 
 
 
@@ -118,7 +140,6 @@ molecule_links:
   become: 'yes'
   vars:
     molecule_python_install: true
-    python311: true
   roles:
     - deitkrachten.python
     - deitkrachten.docker

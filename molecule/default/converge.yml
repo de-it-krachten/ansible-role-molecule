@@ -5,7 +5,6 @@
   become: "yes"
   vars:
     molecule_python_install: True
-    python311: True
   roles:
     - deitkrachten.python
     - deitkrachten.docker

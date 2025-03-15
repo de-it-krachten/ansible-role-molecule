@@ -34,7 +34,7 @@
   volumes:
     - /sys/fs/cgroup:/sys/fs/cgroup:ro
 - name: rockylinux9
-  ci: false
+  ci: true
   image: docker.io/geerlingguy/docker-rockylinux9-ansible:latest
 - name: oraclelinux8
   ci: false
@@ -46,7 +46,7 @@
   ci: true
   image: docker.io/dropveter/almalinux8-ansible
 - name: almalinux9
-  ci: false
+  ci: true
   image: docker.io/dropveter/almalinux9-ansible
 - name: opensuse15
   ci: false
@@ -77,7 +77,7 @@
   ci: true
   image: docker.io/geerlingguy/docker-ubuntu2204-ansible:latest
 - name: ubuntu2404
-  ci: false
+  ci: true
   image: docker.io/geerlingguy/docker-ubuntu2404-ansible:latest
 - name: fedora37
   ci: false

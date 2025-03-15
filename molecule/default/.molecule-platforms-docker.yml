@@ -65,7 +65,7 @@
   volumes:
     - /sys/fs/cgroup:/sys/fs/cgroup:rw
 - name: rockylinux9
-  ci: false
+  ci: true
   image: docker.io/geerlingguy/docker-rockylinux9-ansible:latest
   privileged: true
   pre_build_image: true
@@ -97,7 +97,7 @@
   volumes:
     - /sys/fs/cgroup:/sys/fs/cgroup:rw
 - name: almalinux9
-  ci: false
+  ci: true
   image: docker.io/dropveter/almalinux9-ansible
   privileged: true
   pre_build_image: true
@@ -169,7 +169,7 @@
   volumes:
     - /sys/fs/cgroup:/sys/fs/cgroup:rw
 - name: ubuntu2404
-  ci: false
+  ci: true
   image: docker.io/geerlingguy/docker-ubuntu2404-ansible:latest
   privileged: true
   pre_build_image: true

@@ -23,7 +23,7 @@ platforms:
     supported: true
   rhel9:
     ci: false
-    supported: false
+    supported: true
   centos7:
     ci: false
     supported: false
@@ -40,8 +40,8 @@ platforms:
     ci: true
     supported: true
   rockylinux9:
-    ci: false
-    supported: false
+    ci: true
+    supported: true
   oraclelinux8:
     ci: false
     supported: false
@@ -52,8 +52,8 @@ platforms:
     ci: true
     supported: true
   almalinux9:
-    ci: false
-    supported: false
+    ci: true
+    supported: true
   opensuse15:
     ci: false
     supported: false
@@ -75,12 +75,12 @@ platforms:
   ubuntu2004:
     ci: false
     supported: false
-#  ubuntu2204:
-#    ci: false
-#    supported: false
+  ubuntu2204:
+    ci: true
+    supported: true
   ubuntu2404:
-    ci: false
-    supported: false
+    ci: true
+    supported: true
   fedora40:
     ci: false
     supported: false
@@ -104,7 +104,20 @@ molecule:
   converge:
     vars:
       molecule_python_install: true
-      python311: true
+      #python311: true
     roles:
       - deitkrachten.python
       - deitkrachten.docker
+  host_vars:
+    molecule-rockylinux8-node1:
+      python311: true
+    molecule-rockylinux9-node1:
+      python311: false
+    molecule-almalinux8-node1:
+      python311: true
+    molecule-almalinux9-node1:
+      python311: false
+    molecule-ubuntu2204-node1:
+      python311: true
+    molecule-ubuntu2404-node1:
+      python311: false
