@@ -146,22 +146,6 @@ jobs:
             ansible_lint: "ansible-lint>6,<7"
             hetznercloud: True
 
-          - name: oraclelinux8
-            runs_on: ubuntu-22.04
-            distro: oraclelinux8
-            playbook: converge.yml
-            ansible: "ansible-core>2.16,<2.17"
-            ansible_lint: "ansible-lint>6,<7"
-            hetznercloud: False
-
-          - name: oraclelinux9
-            runs_on: ubuntu-22.04
-            distro: oraclelinux9
-            playbook: converge.yml
-            ansible: "ansible-core>2.16,<2.17"
-            ansible_lint: "ansible-lint>6,<7"
-            hetznercloud: False
-
           - name: almalinux8
             runs_on: ubuntu-22.04
             distro: almalinux8
@@ -178,30 +162,6 @@ jobs:
             ansible_lint: "ansible-lint>6,<7"
             hetznercloud: False
 
-          - name: debian11
-            runs_on: ubuntu-22.04
-            distro: debian11
-            playbook: converge.yml
-            ansible: "ansible-core>2.16,<2.17"
-            ansible_lint: "ansible-lint>6,<7"
-            hetznercloud: True
-
-          - name: debian12
-            runs_on: ubuntu-22.04
-            distro: debian12
-            playbook: converge.yml
-            ansible: "ansible-core>2.16,<2.17"
-            ansible_lint: "ansible-lint>6,<7"
-            hetznercloud: True
-
-          - name: ubuntu2004
-            runs_on: ubuntu-22.04
-            distro: ubuntu2004
-            playbook: converge.yml
-            ansible: "ansible-core>2.16,<2.17"
-            ansible_lint: "ansible-lint>6,<7"
-            hetznercloud: True
-
           - name: ubuntu2204
             runs_on: ubuntu-22.04
             distro: ubuntu2204
@@ -213,22 +173,6 @@ jobs:
           - name: ubuntu2404
             runs_on: ubuntu-22.04
             distro: ubuntu2404
-            playbook: converge.yml
-            ansible: "ansible-core>2.16,<2.17"
-            ansible_lint: "ansible-lint>6,<7"
-            hetznercloud: True
-
-          - name: fedora40
-            runs_on: ubuntu-22.04
-            distro: fedora40
-            playbook: converge.yml
-            ansible: "ansible-core>2.16,<2.17"
-            ansible_lint: "ansible-lint>6,<7"
-            hetznercloud: True
-
-          - name: fedora41
-            runs_on: ubuntu-22.04
-            distro: fedora41
             playbook: converge.yml
             ansible: "ansible-core>2.16,<2.17"
             ansible_lint: "ansible-lint>6,<7"

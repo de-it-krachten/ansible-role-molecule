@@ -71,6 +71,8 @@ MOLECULE_VERSION=$(PY_COLORS=0 molecule --version | awk 'NR==1 {print $NF}')
 MOLECULE_DISTRO=${MOLECULE_DISTRO:-'rockylinux8'}
 export MOLECULE_DISTRO
 
+ROLES_PATH=${TMPDIR}/${BASENAME}.${RANDOM}.${RANDOM}
+export ROLES_PATH
 
 ##############################################################
 #
@@ -114,7 +116,7 @@ Flags :
    -C          : Disable colors in output
    -e <file>   : File with extra vars to use
    -k          : Do not destroy the container
-   -K          :
+   -K          : Destroy any running containers
    -L          : Disable logging to file
    -m <mode>   : Molecule phase to execute (default=test)
    -p          : Execute dependency phase before test
@@ -206,14 +208,25 @@ function Setup
   command -v yq >/dev/null 2>&1 || Install_pip yq
 
   # Get all roles needed by molecule
-  rm -fr /tmp/roles
-  ansible-galaxy install -r molecule/default/requirements.yml -p /tmp/roles || exit 1
+  rm -fr $ROLES_PATH
+  ansible-galaxy install -r molecule/default/requirements.yml -p $ROLES_PATH || exit 1
 
   # Get all collections needed by molecule
-  ${DIRNAME1}/ansible-collections.sh -r /tmp/roles || exit 1
+  ${DIRNAME1}/ansible-collections.sh -r $ROLES_PATH || exit 1
 
   # Make this step not run a second time
   export Setup_executed=true
+
+  # Link from role path
+  ln -s ${PWD} ${ROLES_PATH}/$(basename $PWD)
+
+  # Make sure role can be found
+  if [[ -z $ANSIBLE_ROLES_PATH ]]
+  then
+    export ANSIBLE_ROLES_PATH=$ROLES_PATH
+  else
+    export ANSIBLE_ROLES_PATH=$ANSIBLE_ROLES_PATH:$ROLES_PATH
+  fi
 
 }
 
@@ -596,7 +609,7 @@ function Patch_ansible29
 #############################################################
 
 # Make sure temporary files are cleaned at exit
-trap 'rm -f ${TMPFILE}* ; [[ $Log == true ]] && echo "Log file : $LOGFILE"' EXIT
+trap 'rm -f ${TMPFILE}* ; rm -fr $ROLES_PATH ; [[ $Log == true ]] && echo "Log file : $LOGFILE"' EXIT
 trap 'exit 1' HUP QUIT KILL TERM INT
 
 # Defaults

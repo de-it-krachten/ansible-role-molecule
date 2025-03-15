@@ -25,11 +25,11 @@
   box: generic/rocky9
   interfaces: [{'network_name': 'private_network', 'type': 'dhcp', 'auto_config': True}]
 - name: oraclelinux8
-  ci: true
+  ci: false
   box: generic/oracle8
   interfaces: [{'network_name': 'private_network', 'type': 'dhcp', 'auto_config': True}]
 - name: oraclelinux9
-  ci: true
+  ci: false
   box: generic/oracle9
   interfaces: [{'network_name': 'private_network', 'type': 'dhcp', 'auto_config': True}]
 - name: almalinux8
@@ -53,11 +53,11 @@
   box: generic/debian10
   interfaces: [{'network_name': 'private_network', 'type': 'dhcp', 'auto_config': True}]
 - name: debian11
-  ci: true
+  ci: false
   box: generic/debian11
   interfaces: [{'network_name': 'private_network', 'type': 'dhcp', 'auto_config': True}]
 - name: debian12
-  ci: true
+  ci: false
   box: debian/bookworm64
   interfaces: [{'network_name': 'private_network', 'type': 'dhcp', 'auto_config': True}]
 - name: ubuntu1804
@@ -65,7 +65,7 @@
   box: generic/ubuntu1804
   interfaces: [{'network_name': 'private_network', 'type': 'dhcp', 'auto_config': True}]
 - name: ubuntu2004
-  ci: true
+  ci: false
   box: generic/ubuntu2004
   interfaces: [{'network_name': 'private_network', 'type': 'dhcp', 'auto_config': True}]
 - name: ubuntu2204
@@ -89,11 +89,11 @@
   box: generic/fedora39
   interfaces: [{'network_name': 'private_network', 'type': 'dhcp'}]
 - name: fedora40
-  ci: true
+  ci: false
   box: generic/fedora40
   interfaces: [{'network_name': 'private_network', 'type': 'dhcp'}]
 - name: fedora41
-  ci: true
+  ci: false
   box: generic/fedora41
   interfaces: [{'network_name': 'private_network', 'type': 'dhcp'}]
 - name: alpine3

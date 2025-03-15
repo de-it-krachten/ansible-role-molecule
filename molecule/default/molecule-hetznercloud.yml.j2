@@ -34,7 +34,22 @@ provisioner:
     converge: ${MOLECULE_PLAYBOOK:-converge.yml}
   inventory:
     group_vars: {"linux": {"ansible_user": "vagrant", "ansible_password": "vagrant"}, "windows": {"ansible_user": "vagrant", "ansible_password": "vagrant", "ansible_become_user": "vagrant", "ansible_become_method": "runas", "ansible_connection": "ssh", "ansible_shell_type": "cmd"}}
-    host_vars: {}
+    host_vars:
+{% for platform in MOLECULE_DISTROS %}
+      molecule-almalinux8-node1:
+        python311: true
+      molecule-almalinux9-node1:
+        python311: true
+      molecule-rockylinux8-node1:
+        python311: true
+      molecule-rockylinux9-node1:
+        python311: true
+      molecule-ubuntu2204-node1:
+        python311: true
+      molecule-ubuntu2404-node1:
+        python311: false
+
+{% endfor %}
 scenario:
   name: default
 verifier:
