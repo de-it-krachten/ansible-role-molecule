@@ -10,8 +10,8 @@ Install & manage molecule for testing Ansible roles
 ## Dependencies
 
 #### Roles
-- deitkrachten.python
 - deitkrachten.docker
+- deitkrachten.python
 
 #### Collections
 None
@@ -22,15 +22,21 @@ Supported platforms
 
 - Red Hat Enterprise Linux 8<sup>1</sup>
 - Red Hat Enterprise Linux 9<sup>1</sup>
+- Red Hat Enterprise Linux 10<sup>1</sup>
 - RockyLinux 8
 - RockyLinux 9
+- RockyLinux 10
 - AlmaLinux 8
 - AlmaLinux 9
+- AlmaLinux 10
 - Ubuntu 22.04 LTS
 - Ubuntu 24.04 LTS
+- Fedora 42
+- Fedora 43
 
 Note:
 <sup>1</sup> : no automated testing is performed on these platforms
+
 
 ## Role Variables
 ### defaults/main.yml
@@ -148,6 +154,7 @@ molecule_python: /usr/bin/python3.11
   hosts: all
   become: 'yes'
   vars:
+    molecule_driver: '{{ lookup(''env'', ''MOLECULE_DRIVER_NAME'') }}'
     molecule_python_install: true
   roles:
     - deitkrachten.python
