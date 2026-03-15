@@ -1,3 +1,14 @@
+# [1.10.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.9.0...v1.10.0) (2026-03-15)
+
+
+### Features
+
+* Added support for AlmaLinux 10 ([0df8fdc](https://github.com/de-it-krachten/ansible-role-molecule/commit/0df8fdc9f58bdd678d11ec5642cfbb6038d68862))
+* Added support for Fedora 42 ([ea90130](https://github.com/de-it-krachten/ansible-role-molecule/commit/ea90130799f958d67111dc33bb85f2dd21a76668))
+* Added support for Fedora 43 ([53dfbe7](https://github.com/de-it-krachten/ansible-role-molecule/commit/53dfbe7298ddcd6b3639257e3b6c62cbf9990dd9))
+* Added support for Red Hat Enterprise Linux 10 ([451cd42](https://github.com/de-it-krachten/ansible-role-molecule/commit/451cd4207219b34b7825b589f648bb719881cbf7))
+* Added support for RockyLinux 10 ([aeb91ca](https://github.com/de-it-krachten/ansible-role-molecule/commit/aeb91ca06e09e40896d81d380f5b52e8bca412e9))
+
 # [1.9.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.8.0...v1.9.0) (2025-03-15)
 
 
