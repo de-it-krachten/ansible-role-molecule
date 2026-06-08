@@ -18,9 +18,7 @@ defaults:
     working-directory: "de-it-krachten/ansible-role-molecule"
 
 
-# Create list of platform to perform CI on
 
-# Get intersect of CI platforms & default platforms for phase1
 
 jobs:
 
@@ -216,9 +214,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: ubuntu2604
+          - name: rockylinux10
             runs_on: ubuntu-22.04
-            distro: ubuntu2604
+            distro: rockylinux10
             playbook: converge.yml
             venv: "ansiblecore220"
             ansible: "ansible-core>2.20,<2.21"
@@ -226,9 +224,9 @@ jobs:
             python: "3.13"
             hetznercloud: False
 
-          - name: rockylinux10
+          - name: ubuntu2604
             runs_on: ubuntu-22.04
-            distro: rockylinux10
+            distro: ubuntu2604
             playbook: converge.yml
             venv: "ansiblecore220"
             ansible: "ansible-core>2.20,<2.21"
