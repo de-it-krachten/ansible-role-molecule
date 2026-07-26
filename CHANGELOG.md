@@ -1,3 +1,17 @@
+# [1.11.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.10.0...v1.11.0) (2026-07-26)
+
+
+### Bug Fixes
+
+* Standarize vars.yml ([b13ac26](https://github.com/de-it-krachten/ansible-role-molecule/commit/b13ac269ad917e0033602258a8d87f443a7bef45))
+
+
+### Features
+
+* Added support for Fedora 44 ([5780f76](https://github.com/de-it-krachten/ansible-role-molecule/commit/5780f76c73c1c35b048bf8aea696971d499dfa70))
+* Added support for Ubuntu 26.04 LTS ([f1025ad](https://github.com/de-it-krachten/ansible-role-molecule/commit/f1025adb8044d8aeae521d4ee516d75672812c64))
+* Drop support for Fedora 42 ([cdd2973](https://github.com/de-it-krachten/ansible-role-molecule/commit/cdd297383e77676e25b269fd36c01cc4776ace94))
+
 # [1.10.0](https://github.com/de-it-krachten/ansible-role-molecule/compare/v1.9.0...v1.10.0) (2026-03-15)
 
 
